@@ -9,7 +9,10 @@ package main
 // Please do not change this file.
 //
 
-import "../mr"
+import (
+	"../mr"
+	"log"
+)
 import "time"
 import "os"
 import "fmt"
@@ -24,6 +27,6 @@ func main() {
 	for m.Done() == false {
 		time.Sleep(time.Second)
 	}
-
+	log.Println("master 断开连接。。。。")
 	time.Sleep(time.Second)
 }

@@ -1,0 +1,5 @@
+       nReduce                        nReduce              nReduce
+
+mapperX(file,content)  ->  mr-XY   -> reduce-Y(k, file) -> mr-output-Y :[k,v] [k1,v1]
+                           相应的k写到 Xhash（k） % y文件中
+                           相应的k写到 hash（k）文件中（粒度更细） -》

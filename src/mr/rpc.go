@@ -23,7 +23,11 @@ type ExampleReply struct {
 }
 
 // Add your RPC definitions here.
-
+type TaskReply struct {
+	Task Task
+	// 1 有任务， 0 无任务可分配但有任务执行中， -1 无任务可分配且无任务执行中
+	Status int
+}
 
 // Cook up a unique-ish UNIX-domain socket name
 // in /var/tmp, for the master.

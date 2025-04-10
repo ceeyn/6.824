@@ -28,7 +28,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	mapf, reducef := loadPlugin(os.Args[1])
+	mapf, reducef := LoadPlugin(os.Args[1])
 
 	//
 	// read each input file,
@@ -86,11 +86,9 @@ func main() {
 	ofile.Close()
 }
 
-//
 // load the application Map and Reduce functions
 // from a plugin file, e.g. ../mrapps/wc.so
-//
-func loadPlugin(filename string) (func(string, string) []mr.KeyValue, func(string, []string) string) {
+func LoadPlugin(filename string) (func(string, string) []mr.KeyValue, func(string, []string) string) {
 	p, err := plugin.Open(filename)
 	if err != nil {
 		log.Fatalf("cannot load plugin %v", filename)
