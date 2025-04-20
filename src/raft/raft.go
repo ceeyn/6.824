@@ -149,8 +149,8 @@ type RequestVoteReply struct {
 func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	// Your code here (2A, 2B).
 	// 说明当前的 Term 大于 候选者，当前更适合当 leader
-	//rf.mu.Lock()
-	//defer rf.mu.Unlock()
+	rf.mu.Lock()
+	defer rf.mu.Unlock()
 	if rf.me == args.CandidateId {
 		rf.votedFor = rf.me
 		reply.Term = rf.currentTerm
@@ -234,7 +234,7 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendReply) {
 		// 收到请求的term
 		reply.Term = rf.currentTerm
 		// 说明进入了新的 epoch
-		log.Printf("%v AppendEntries %v，rf：%v", args, reply, rf)
+		//log.Printf("%v AppendEntries %v，rf：%v", args, reply, rf)
 	} else {
 		// 追加请求的处理
 		log1 := rf.log
@@ -247,7 +247,7 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendReply) {
 			rf.isLeader = true
 		}
 		if currentTerm < args.LeaderEpoch {
-			log.Printf("出现错误。。。。currentTerm < args.LeaderEpoch")
+			//log.Printf("出现错误。。。。currentTerm < args.LeaderEpoch")
 			reply.Term = currentTerm
 			reply.Success = false
 		}
@@ -264,15 +264,15 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendReply) {
 		rf.lastCommitId = min(rf.lastCommitId, args.LeaderCommit)
 		reply.Success = true
 		reply.Term = currentTerm
-		log.Printf("%v AppendEntries %v，rf：%v", args, reply, rf)
+		//log.Printf("%v AppendEntries %v，rf：%v", args, reply, rf)
 	}
 }
 
 // 发送心跳/追加 rpc，对所有情况都适用：同时发这个，1.追加最新的，2.追加旧的，3.心跳
 func (rf *Raft) sendRequestAppendEntries(server int, args *AppendEntriesArgs, reply *AppendReply) bool {
+	rf.mu.Lock()
 	ok := rf.peers[server].Call("Raft.AppendEntries", args, reply)
-	//defer rf.mu.Unlock()
-	//rf.mu.Lock()
+	defer rf.mu.Unlock()
 	if !ok {
 		// follower 的 Term 大于 leader 的，follower 成为 leader
 		if reply.Term > rf.lastCommitId {
@@ -390,19 +390,23 @@ func Make(peers []*labrpc.ClientEnd, me int,
 	go func() {
 		for {
 			rf.mu.Lock()
+			isLeader := rf.isLeader
+			leaderId := rf.me
+			leaderEpoch := rf.currentTerm
+			rf.mu.Unlock()
 			//log.Printf("raft【%v】 is leader: %v, raft echo is %v", rf.me, rf.isLeader, rf.currentTerm)
 			// 是 leader 才发送心跳
-			if rf.isLeader {
+			if isLeader {
 				// i 是 int 类型，_, i := range peers i才是peer 类型
 				log.Printf("leader come: %v", me)
 				for i := range peers {
 					j := i
+					if j == me {
+						continue
+					}
 					go func() {
-						if j == me {
-							return
-						}
-						var req *AppendEntriesArgs = &AppendEntriesArgs{IsHeart: true, LeaderId: rf.me,
-							LeaderEpoch: rf.currentTerm}
+						var req *AppendEntriesArgs = &AppendEntriesArgs{IsHeart: true, LeaderId: leaderId,
+							LeaderEpoch: leaderEpoch}
 						reply := &AppendReply{}
 						rf.sendRequestAppendEntries(j, req, reply)
 					}()
@@ -411,7 +415,6 @@ func Make(peers []*labrpc.ClientEnd, me int,
 				// 1s 10次心跳
 				time.Sleep(100 * time.Millisecond)
 			}
-			rf.mu.Unlock()
 		}
 	}()
 
@@ -420,33 +423,47 @@ func Make(peers []*labrpc.ClientEnd, me int,
 		for {
 			time.Sleep(rf.electionOutTime)
 			rf.mu.Lock()
-			if !rf.isLeader && time.Now().Sub(rf.lastHeartbeatTime) >= rf.electionOutTime {
-				log.Printf("%v begin election, epoch: %v", rf.me, rf.currentTerm)
+			isLeader := rf.isLeader
+			lastHeartbeatTime := rf.lastHeartbeatTime
+			electionOutTime := rf.electionOutTime
+			n := len(rf.log)
+			lastLogIndex := 0
+			lastLogTerm := 0
+			if n != 0 {
+				lastLog := rf.log[n-1]
+				lastLogIndex = n - 1
+				lastLogTerm = lastLog.term
+			}
+			candidateId := rf.me
+			rf.mu.Unlock()
+			// 不能在 rpc 调用过程持有锁，在获取参数或者处理返回结果时候持有
+			if !isLeader && time.Now().Sub(lastHeartbeatTime) >= electionOutTime {
 				curVote := 0
 				// 每次选举 term++
+				rf.mu.Lock()
 				rf.currentTerm++
+				currentTerm := rf.currentTerm
+				log.Printf("%v begin election, epoch: %v", rf.me, currentTerm)
+				rf.mu.Unlock()
 				for i := range peers {
 					//if i == me {
 					//	continue
 					//}
 					i1 := i
 					go func() {
-						n := len(rf.log)
-						lastLogIndex := 0
-						lastLogTerm := 0
-						if n != 0 {
-							lastLog := rf.log[n-1]
-							lastLogIndex = n - 1
-							lastLogTerm = lastLog.term
-						}
-						log.Printf("curIndex : %v, curCandidate: %v", i1, rf.me)
-						req := &RequestVoteArgs{rf.currentTerm, lastLogIndex,
-							lastLogTerm, rf.me}
+						//log.Printf("curIndex : %v, curCandidate: %v", i1, rf.me)
+						req := &RequestVoteArgs{currentTerm, lastLogIndex,
+							lastLogTerm, candidateId}
 						reply := &RequestVoteReply{}
 						rf.sendRequestVote(i1, req, reply)
-						if reply.VoteGranted == true {
+						rf.mu.Lock()
+						voteGranted := reply.VoteGranted
+						if voteGranted == true {
 							curVote++
 							if curVote > len(peers)/2 {
+								if rf.currentTerm != currentTerm {
+									return
+								}
 								rf.isLeader = true
 								rf.nextIndex = make([]int, len(peers))
 								rf.matchIndex = make([]int, len(peers))
@@ -454,12 +471,12 @@ func Make(peers []*labrpc.ClientEnd, me int,
 									rf.me, curVote, len(peers))
 							}
 						}
+						rf.mu.Unlock()
 						log.Printf("%v votedFor %v is %v",
 							i1, rf.me, reply.VoteGranted)
 					}()
 				}
 			}
-			rf.mu.Unlock()
 		}
 	}()
 
