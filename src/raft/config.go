@@ -306,11 +306,11 @@ func (cfg *config) checkOneLeader() int {
 		leaders := make(map[int][]int)
 		for i := 0; i < cfg.n; i++ {
 			if cfg.connected[i] {
-				log.Printf("1")
+				log.Printf("check...%v", i)
 				if term, leader := cfg.rafts[i].GetState(); leader {
 					leaders[term] = append(leaders[term], i)
 				}
-				log.Printf("%v is Leader ? %v, term: %v", cfg.rafts[i].me, cfg.rafts[i].isLeader, cfg.rafts[i].currentTerm)
+				//log.Printf("%v is Leader ? %v, term: %v", cfg.rafts[i].me, cfg.rafts[i].isLeader, cfg.rafts[i].currentTerm)
 			}
 		}
 		log.Printf("2")
@@ -345,7 +345,7 @@ func (cfg *config) checkTerms() int {
 				term = xterm
 			} else if term != xterm {
 				for _, raft := range cfg.rafts {
-					log.Printf("raft is leader: %v, raft echo is %v", raft.isLeader, raft.currentTerm)
+					log.Printf("raft is : %v, raft echo is %v", raft.state, raft.currentTerm)
 				}
 				cfg.t.Fatalf("servers disagree on Term")
 			}
