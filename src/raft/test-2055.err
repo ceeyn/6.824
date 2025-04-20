@@ -1,0 +1,395 @@
+2025/04/21 00:50:55 first check
+2025/04/21 00:50:55 0 begin elec
+2025/04/21 00:50:55 curIndex : 2, curCandidate: 0
+2025/04/21 00:50:55 curIndex : 1, curCandidate: 0
+2025/04/21 00:50:55 sendRequestVote,args.term:1,args.CandidateId:0，rf.me：2,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:55 sendRequestVote,args.term:1,args.CandidateId:0，rf.me：1,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:55 new leader: 0
+, curVote: 2, nums: 3
+2025/04/21 00:50:55 2 votedFor 0 is true
+2025/04/21 00:50:55 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：2,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:55 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：1,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:55 checkOneLeader sleep: 461ms
+2025/04/21 00:50:55 check...0
+2025/04/21 00:50:55 0 begin getState
+2025/04/21 00:50:55 0 is Leader
+2025/04/21 00:50:55 GetState release lock
+2025/04/21 00:50:55 check...1
+2025/04/21 00:50:55 1 begin getState
+2025/04/21 00:50:55 GetState release lock
+2025/04/21 00:50:55 check...2
+2025/04/21 00:50:55 2 begin getState
+2025/04/21 00:50:55 GetState release lock
+2025/04/21 00:50:55 2
+2025/04/21 00:50:55 leader:0
+2025/04/21 00:50:55 final leader is 0
+2025/04/21 00:50:55 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：2,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:55 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：1,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:55 0 begin getState
+2025/04/21 00:50:55 0 is Leader
+2025/04/21 00:50:55 GetState release lock
+2025/04/21 00:50:55 1 begin getState
+2025/04/21 00:50:55 GetState release lock
+2025/04/21 00:50:55 2 begin getState
+2025/04/21 00:50:55 GetState release lock
+2025/04/21 00:50:55 secondcheck
+2025/04/21 00:50:55 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：2,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:55 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：1,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:55 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：2,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:55 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：1,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:56 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：2,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:56 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：1,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:56 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：1,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:56 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：2,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:56 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：2,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:56 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：1,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:56 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：1,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:56 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：2,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:56 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：2,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:56 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：1,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:56 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：1,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:56 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：2,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:56 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：1,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:56 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：2,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:56 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：1,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:56 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：2,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:56 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：2,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:56 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：1,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:56 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：1,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:56 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：2,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:57 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：1,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:57 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：2,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:57 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：1,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:57 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：2,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:57 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：2,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:57 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：1,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:57 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：2,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:57 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：1,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:57 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：2,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:57 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：1,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:57 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：1,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:57 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：2,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:57 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：2,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:57 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：1,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:57 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：1,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:57 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：2,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:57 0 begin getState
+2025/04/21 00:50:57 0 is Leader
+2025/04/21 00:50:57 GetState release lock
+2025/04/21 00:50:57 1 begin getState
+2025/04/21 00:50:57 GetState release lock
+2025/04/21 00:50:57 2 begin getState
+2025/04/21 00:50:57 GetState release lock
+2025/04/21 00:50:57 threecheck
+2025/04/21 00:50:57 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：2,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:57 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：1,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:57 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：2,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:57 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：1,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:58 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：1,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:58 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：2,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:58 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：1,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:58 AppendEntries,args.leaderId:0,args.epoch:1，rf.me：2,rf.term：1,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:58 checkOneLeader sleep: 457ms
+2025/04/21 00:50:58 check...0
+2025/04/21 00:50:58 0 begin getState
+2025/04/21 00:50:58 0 is Leader
+2025/04/21 00:50:58 GetState release lock
+2025/04/21 00:50:58 check...1
+2025/04/21 00:50:58 1 begin getState
+2025/04/21 00:50:58 GetState release lock
+2025/04/21 00:50:58 check...2
+2025/04/21 00:50:58 2 begin getState
+2025/04/21 00:50:58 GetState release lock
+2025/04/21 00:50:58 2
+2025/04/21 00:50:58 leader:0
+2025/04/21 00:50:58 final leader is 0
+2025/04/21 00:50:58 1 begin elec
+2025/04/21 00:50:58 curIndex : 2, curCandidate: 1
+2025/04/21 00:50:58 curIndex : 0, curCandidate: 1
+2025/04/21 00:50:58 2 votedFor 1 is false
+2025/04/21 00:50:58 0 votedFor 1 is false
+2025/04/21 00:50:58 2 begin elec
+2025/04/21 00:50:58 curIndex : 1, curCandidate: 2
+2025/04/21 00:50:58 1 votedFor 2 is false
+2025/04/21 00:50:58 curIndex : 0, curCandidate: 2
+2025/04/21 00:50:58 0 votedFor 2 is false
+2025/04/21 00:50:58 2 begin elec
+2025/04/21 00:50:58 curIndex : 1, curCandidate: 2
+2025/04/21 00:50:58 curIndex : 0, curCandidate: 2
+2025/04/21 00:50:58 sendRequestVote,args.term:1,args.CandidateId:2，rf.me：0,rf.term：1,rf.voteFor：2,rf.state：0
+2025/04/21 00:50:58 sendRequestVote,args.term:1,args.CandidateId:2，rf.me：1,rf.term：1,rf.voteFor：2,rf.state：0
+2025/04/21 00:50:58 new leader: 2
+, curVote: 2, nums: 3
+2025/04/21 00:50:58 0 votedFor 2 is true
+2025/04/21 00:50:58 AppendEntries,args.leaderId:2,args.epoch:1，rf.me：0,rf.term：1,rf.voteFor：2,rf.state：0
+2025/04/21 00:50:58 AppendEntries,args.leaderId:2,args.epoch:1，rf.me：1,rf.term：1,rf.voteFor：2,rf.state：0
+2025/04/21 00:50:58 AppendEntries,args.leaderId:2,args.epoch:1，rf.me：1,rf.term：1,rf.voteFor：2,rf.state：0
+2025/04/21 00:50:58 AppendEntries,args.leaderId:2,args.epoch:1，rf.me：0,rf.term：1,rf.voteFor：2,rf.state：0
+2025/04/21 00:50:58 checkOneLeader sleep: 468ms
+2025/04/21 00:50:58 check...0
+2025/04/21 00:50:58 0 begin getState
+2025/04/21 00:50:58 GetState release lock
+2025/04/21 00:50:58 check...1
+2025/04/21 00:50:58 1 begin getState
+2025/04/21 00:50:58 GetState release lock
+2025/04/21 00:50:58 check...2
+2025/04/21 00:50:58 2 begin getState
+2025/04/21 00:50:58 2 is Leader
+2025/04/21 00:50:58 GetState release lock
+2025/04/21 00:50:58 2
+2025/04/21 00:50:58 leader:2
+2025/04/21 00:50:58 final leader is 2
+2025/04/21 00:50:58 first check--------------------------leader：2
+2025/04/21 00:50:58 2 begin elec
+2025/04/21 00:50:58 curIndex : 1, curCandidate: 2
+2025/04/21 00:50:58 curIndex : 0, curCandidate: 2
+2025/04/21 00:50:58 1 votedFor 2 is false
+2025/04/21 00:50:58 0 votedFor 2 is false
+2025/04/21 00:50:58 1 begin elec
+2025/04/21 00:50:58 curIndex : 2, curCandidate: 1
+2025/04/21 00:50:58 curIndex : 0, curCandidate: 1
+2025/04/21 00:50:58 2 votedFor 1 is false
+2025/04/21 00:50:58 0 votedFor 1 is false
+2025/04/21 00:50:58 0 begin elec
+2025/04/21 00:50:58 curIndex : 2, curCandidate: 0
+2025/04/21 00:50:58 curIndex : 1, curCandidate: 0
+2025/04/21 00:50:58 sendRequestVote,args.term:2,args.CandidateId:0，rf.me：1,rf.term：2,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:58 new leader: 0
+, curVote: 2, nums: 3
+2025/04/21 00:50:58 1 votedFor 0 is true
+2025/04/21 00:50:58 AppendEntries,args.leaderId:0,args.epoch:2，rf.me：1,rf.term：2,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:59 AppendEntries,args.leaderId:0,args.epoch:2，rf.me：1,rf.term：2,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:59 checkOneLeader sleep: 460ms
+2025/04/21 00:50:59 check...0
+2025/04/21 00:50:59 0 begin getState
+2025/04/21 00:50:59 0 is Leader
+2025/04/21 00:50:59 GetState release lock
+2025/04/21 00:50:59 check...1
+2025/04/21 00:50:59 1 begin getState
+2025/04/21 00:50:59 GetState release lock
+2025/04/21 00:50:59 2
+2025/04/21 00:50:59 leader:0
+2025/04/21 00:50:59 final leader is 0
+2025/04/21 00:50:59 second check--------------------------
+2025/04/21 00:50:59 AppendEntries,args.leaderId:0,args.epoch:2，rf.me：1,rf.term：2,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:59 1 begin elec
+2025/04/21 00:50:59 curIndex : 2, curCandidate: 1
+2025/04/21 00:50:59 2 votedFor 1 is false
+2025/04/21 00:50:59 AppendEntries,args.leaderId:0,args.epoch:2，rf.me：2,rf.term：2,rf.voteFor：-1,rf.state：0
+2025/04/21 00:50:59 curIndex : 0, curCandidate: 1
+2025/04/21 00:50:59 0 votedFor 1 is false
+2025/04/21 00:50:59 2 begin elec
+2025/04/21 00:50:59 curIndex : 1, curCandidate: 2
+2025/04/21 00:50:59 curIndex : 0, curCandidate: 2
+2025/04/21 00:50:59 1 votedFor 2 is false
+2025/04/21 00:50:59 0 votedFor 2 is false
+2025/04/21 00:50:59 AppendEntries,args.leaderId:0,args.epoch:2，rf.me：1,rf.term：2,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:59 AppendEntries,args.leaderId:0,args.epoch:2，rf.me：2,rf.term：2,rf.voteFor：-1,rf.state：0
+2025/04/21 00:50:59 AppendEntries,args.leaderId:0,args.epoch:2，rf.me：1,rf.term：2,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:59 AppendEntries,args.leaderId:0,args.epoch:2，rf.me：2,rf.term：2,rf.voteFor：-1,rf.state：0
+2025/04/21 00:50:59 AppendEntries,args.leaderId:0,args.epoch:2，rf.me：1,rf.term：2,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:59 AppendEntries,args.leaderId:0,args.epoch:2，rf.me：2,rf.term：2,rf.voteFor：-1,rf.state：0
+2025/04/21 00:50:59 1 begin elec
+2025/04/21 00:50:59 curIndex : 2, curCandidate: 1
+2025/04/21 00:50:59 curIndex : 0, curCandidate: 1
+2025/04/21 00:50:59 2 votedFor 1 is false
+2025/04/21 00:50:59 0 votedFor 1 is false
+2025/04/21 00:50:59 AppendEntries,args.leaderId:0,args.epoch:2，rf.me：1,rf.term：2,rf.voteFor：0,rf.state：0
+2025/04/21 00:50:59 AppendEntries,args.leaderId:0,args.epoch:2，rf.me：2,rf.term：2,rf.voteFor：-1,rf.state：0
+2025/04/21 00:50:59 checkOneLeader sleep: 486ms
+2025/04/21 00:50:59 check...0
+2025/04/21 00:50:59 0 begin getState
+2025/04/21 00:50:59 0 is Leader
+2025/04/21 00:50:59 GetState release lock
+2025/04/21 00:50:59 check...1
+2025/04/21 00:50:59 1 begin getState
+2025/04/21 00:50:59 GetState release lock
+2025/04/21 00:50:59 check...2
+2025/04/21 00:50:59 2 begin getState
+2025/04/21 00:50:59 GetState release lock
+2025/04/21 00:50:59 2
+2025/04/21 00:50:59 leader:0
+2025/04/21 00:50:59 final leader is 0
+2025/04/21 00:50:59 2 begin elec
+2025/04/21 00:50:59 curIndex : 1, curCandidate: 2
+2025/04/21 00:50:59 curIndex : 0, curCandidate: 2
+2025/04/21 00:50:59 1 votedFor 2 is false
+2025/04/21 00:50:59 0 votedFor 2 is false
+2025/04/21 00:50:59 1 begin elec
+2025/04/21 00:50:59 curIndex : 2, curCandidate: 1
+2025/04/21 00:50:59 curIndex : 0, curCandidate: 1
+2025/04/21 00:50:59 2 begin elec
+2025/04/21 00:50:59 curIndex : 1, curCandidate: 2
+2025/04/21 00:50:59 curIndex : 0, curCandidate: 2
+2025/04/21 00:51:00 1 begin elec
+2025/04/21 00:51:00 curIndex : 2, curCandidate: 1
+2025/04/21 00:51:00 2 votedFor 1 is false
+2025/04/21 00:51:00 curIndex : 0, curCandidate: 1
+2025/04/21 00:51:00 0 votedFor 1 is false
+2025/04/21 00:51:00 2 begin elec
+2025/04/21 00:51:00 curIndex : 1, curCandidate: 2
+2025/04/21 00:51:00 curIndex : 0, curCandidate: 2
+2025/04/21 00:51:00 1 votedFor 2 is false
+2025/04/21 00:51:00 0 votedFor 2 is false
+2025/04/21 00:51:00 2 votedFor 0 is false
+2025/04/21 00:51:00 1 begin elec
+2025/04/21 00:51:00 curIndex : 0, curCandidate: 1
+2025/04/21 00:51:00 curIndex : 2, curCandidate: 1
+2025/04/21 00:51:00 1 begin elec
+2025/04/21 00:51:00 curIndex : 2, curCandidate: 1
+2025/04/21 00:51:00 curIndex : 0, curCandidate: 1
+2025/04/21 00:51:00 2 votedFor 1 is false
+2025/04/21 00:51:00 0 votedFor 1 is false
+2025/04/21 00:51:00 2 begin elec
+2025/04/21 00:51:00 curIndex : 1, curCandidate: 2
+2025/04/21 00:51:00 curIndex : 0, curCandidate: 2
+2025/04/21 00:51:00 1 votedFor 2 is false
+2025/04/21 00:51:00 0 votedFor 2 is false
+2025/04/21 00:51:00 2 begin elec
+2025/04/21 00:51:00 curIndex : 1, curCandidate: 2
+2025/04/21 00:51:00 curIndex : 0, curCandidate: 2
+2025/04/21 00:51:00 1 begin elec
+2025/04/21 00:51:00 curIndex : 2, curCandidate: 1
+2025/04/21 00:51:00 curIndex : 0, curCandidate: 1
+2025/04/21 00:51:00 1 begin elec
+2025/04/21 00:51:00 curIndex : 2, curCandidate: 1
+2025/04/21 00:51:00 2 votedFor 1 is false
+2025/04/21 00:51:00 curIndex : 0, curCandidate: 1
+2025/04/21 00:51:00 0 votedFor 1 is false
+2025/04/21 00:51:00 2 begin elec
+2025/04/21 00:51:00 curIndex : 1, curCandidate: 2
+2025/04/21 00:51:00 curIndex : 0, curCandidate: 2
+2025/04/21 00:51:00 2 begin elec
+2025/04/21 00:51:00 curIndex : 1, curCandidate: 2
+2025/04/21 00:51:00 curIndex : 0, curCandidate: 2
+2025/04/21 00:51:00 1 votedFor 2 is false
+2025/04/21 00:51:00 0 votedFor 2 is false
+2025/04/21 00:51:00 1 votedFor 2 is false
+2025/04/21 00:51:01 1 votedFor 2 is false
+2025/04/21 00:51:01 1 begin elec
+2025/04/21 00:51:01 curIndex : 2, curCandidate: 1
+2025/04/21 00:51:01 curIndex : 0, curCandidate: 1
+2025/04/21 00:51:01 1 begin elec
+2025/04/21 00:51:01 curIndex : 2, curCandidate: 1
+2025/04/21 00:51:01 curIndex : 0, curCandidate: 1
+2025/04/21 00:51:01 2 votedFor 1 is false
+2025/04/21 00:51:01 0 votedFor 1 is false
+2025/04/21 00:51:01 2 begin elec
+2025/04/21 00:51:01 curIndex : 1, curCandidate: 2
+2025/04/21 00:51:01 1 votedFor 2 is false
+2025/04/21 00:51:01 curIndex : 0, curCandidate: 2
+2025/04/21 00:51:01 0 votedFor 2 is false
+2025/04/21 00:51:01 2 begin elec
+2025/04/21 00:51:01 curIndex : 1, curCandidate: 2
+2025/04/21 00:51:01 curIndex : 0, curCandidate: 2
+2025/04/21 00:51:01 2 votedFor 1 is false
+2025/04/21 00:51:01 0 votedFor 1 is false
+2025/04/21 00:51:01 1 begin elec
+2025/04/21 00:51:01 curIndex : 2, curCandidate: 1
+2025/04/21 00:51:01 curIndex : 0, curCandidate: 1
+2025/04/21 00:51:01 1 begin elec
+2025/04/21 00:51:01 curIndex : 2, curCandidate: 1
+2025/04/21 00:51:01 curIndex : 0, curCandidate: 1
+2025/04/21 00:51:01 2 votedFor 1 is false
+2025/04/21 00:51:01 0 votedFor 1 is false
+2025/04/21 00:51:01 third check--------------------------
+2025/04/21 00:51:01 2 begin getState
+2025/04/21 00:51:01 GetState release lock
+2025/04/21 00:51:01 four connect: 1
+2025/04/21 00:51:01 four check--------------------------
+2025/04/21 00:51:01 2 begin elec
+2025/04/21 00:51:01 curIndex : 1, curCandidate: 2
+2025/04/21 00:51:01 curIndex : 0, curCandidate: 2
+2025/04/21 00:51:01 0 votedFor 2 is false
+2025/04/21 00:51:01 1 votedFor 2 is false
+2025/04/21 00:51:01 2 begin elec
+2025/04/21 00:51:01 curIndex : 1, curCandidate: 2
+2025/04/21 00:51:01 curIndex : 0, curCandidate: 2
+2025/04/21 00:51:01 sendRequestVote,args.term:7,args.CandidateId:2，rf.me：1,rf.term：7,rf.voteFor：1,rf.state：1
+2025/04/21 00:51:01 1 votedFor 2 is false
+2025/04/21 00:51:01 1 begin elec
+2025/04/21 00:51:01 curIndex : 2, curCandidate: 1
+2025/04/21 00:51:01 curIndex : 0, curCandidate: 1
+2025/04/21 00:51:01 2 votedFor 1 is false
+2025/04/21 00:51:01 0 votedFor 1 is false
+2025/04/21 00:51:02 checkOneLeader sleep: 483ms
+2025/04/21 00:51:02 check...1
+2025/04/21 00:51:02 1 begin getState
+2025/04/21 00:51:02 GetState release lock
+2025/04/21 00:51:02 check...2
+2025/04/21 00:51:02 2 begin getState
+2025/04/21 00:51:02 GetState release lock
+2025/04/21 00:51:02 2
+2025/04/21 00:51:02 1 begin elec
+2025/04/21 00:51:02 curIndex : 2, curCandidate: 1
+2025/04/21 00:51:02 curIndex : 0, curCandidate: 1
+2025/04/21 00:51:02 sendRequestVote,args.term:8,args.CandidateId:1，rf.me：2,rf.term：8,rf.voteFor：1,rf.state：0
+2025/04/21 00:51:02 new leader: 1
+, curVote: 2, nums: 3
+2025/04/21 00:51:02 2 votedFor 1 is true
+2025/04/21 00:51:02 2 begin elec
+2025/04/21 00:51:02 curIndex : 1, curCandidate: 2
+2025/04/21 00:51:02 curIndex : 0, curCandidate: 2
+2025/04/21 00:51:02 0 votedFor 2 is false
+2025/04/21 00:51:02 1 votedFor 2 is false
+2025/04/21 00:51:02 AppendEntries,args.leaderId:1,args.epoch:8，rf.me：2,rf.term：8,rf.voteFor：1,rf.state：0
+2025/04/21 00:51:02 AppendEntries,args.leaderId:1,args.epoch:8，rf.me：2,rf.term：8,rf.voteFor：1,rf.state：0
+2025/04/21 00:51:02 AppendEntries,args.leaderId:1,args.epoch:8，rf.me：2,rf.term：8,rf.voteFor：1,rf.state：0
+2025/04/21 00:51:02 1 begin elec
+2025/04/21 00:51:02 curIndex : 2, curCandidate: 1
+2025/04/21 00:51:02 curIndex : 0, curCandidate: 1
+2025/04/21 00:51:02 2 votedFor 1 is false
+2025/04/21 00:51:02 0 votedFor 1 is false
+2025/04/21 00:51:02 AppendEntries,args.leaderId:1,args.epoch:8，rf.me：2,rf.term：8,rf.voteFor：1,rf.state：0
+2025/04/21 00:51:02 0 votedFor 2 is false
+2025/04/21 00:51:02 checkOneLeader sleep: 457ms
+2025/04/21 00:51:02 check...1
+2025/04/21 00:51:02 1 begin getState
+2025/04/21 00:51:02 1 is Leader
+2025/04/21 00:51:02 GetState release lock
+2025/04/21 00:51:02 check...2
+2025/04/21 00:51:02 2 begin getState
+2025/04/21 00:51:02 GetState release lock
+2025/04/21 00:51:02 2
+2025/04/21 00:51:02 leader:1
+2025/04/21 00:51:02 final leader is 1
+2025/04/21 00:51:02 five check--------------------------
+2025/04/21 00:51:02 AppendEntries,args.leaderId:1,args.epoch:8，rf.me：2,rf.term：8,rf.voteFor：1,rf.state：0
+2025/04/21 00:51:02 AppendEntries,args.leaderId:1,args.epoch:8，rf.me：0,rf.term：8,rf.voteFor：-1,rf.state：0
+2025/04/21 00:51:02 2 begin elec
+2025/04/21 00:51:02 curIndex : 1, curCandidate: 2
+2025/04/21 00:51:02 curIndex : 0, curCandidate: 2
+2025/04/21 00:51:02 1 votedFor 2 is false
+2025/04/21 00:51:02 0 votedFor 2 is false
+2025/04/21 00:51:02 AppendEntries,args.leaderId:1,args.epoch:8，rf.me：0,rf.term：8,rf.voteFor：-1,rf.state：0
+2025/04/21 00:51:02 AppendEntries,args.leaderId:1,args.epoch:8，rf.me：2,rf.term：8,rf.voteFor：1,rf.state：0
+2025/04/21 00:51:02 1 begin elec
+2025/04/21 00:51:02 curIndex : 2, curCandidate: 1
+2025/04/21 00:51:02 curIndex : 0, curCandidate: 1
+2025/04/21 00:51:02 2 votedFor 1 is false
+2025/04/21 00:51:02 0 votedFor 1 is false
+2025/04/21 00:51:02 AppendEntries,args.leaderId:1,args.epoch:8，rf.me：0,rf.term：8,rf.voteFor：-1,rf.state：0
+2025/04/21 00:51:02 AppendEntries,args.leaderId:1,args.epoch:8，rf.me：2,rf.term：8,rf.voteFor：1,rf.state：0
+2025/04/21 00:51:02 AppendEntries,args.leaderId:1,args.epoch:8，rf.me：2,rf.term：8,rf.voteFor：1,rf.state：0
+2025/04/21 00:51:02 AppendEntries,args.leaderId:1,args.epoch:8，rf.me：0,rf.term：8,rf.voteFor：-1,rf.state：0
+2025/04/21 00:51:02 2 begin elec
+2025/04/21 00:51:02 curIndex : 1, curCandidate: 2
+2025/04/21 00:51:02 curIndex : 0, curCandidate: 2
+2025/04/21 00:51:02 1 votedFor 2 is false
+2025/04/21 00:51:02 0 votedFor 2 is false
+2025/04/21 00:51:02 AppendEntries,args.leaderId:1,args.epoch:8，rf.me：0,rf.term：8,rf.voteFor：-1,rf.state：0
+2025/04/21 00:51:02 AppendEntries,args.leaderId:1,args.epoch:8，rf.me：2,rf.term：8,rf.voteFor：1,rf.state：0
+2025/04/21 00:51:03 checkOneLeader sleep: 478ms
+2025/04/21 00:51:03 check...0
+2025/04/21 00:51:03 0 begin getState
+2025/04/21 00:51:03 GetState release lock
+2025/04/21 00:51:03 check...1
+2025/04/21 00:51:03 1 begin getState
+2025/04/21 00:51:03 1 is Leader
+2025/04/21 00:51:03 GetState release lock
+2025/04/21 00:51:03 check...2
+2025/04/21 00:51:03 2 begin getState
+2025/04/21 00:51:03 GetState release lock
+2025/04/21 00:51:03 2
+2025/04/21 00:51:03 leader:1
+2025/04/21 00:51:03 final leader is 1
