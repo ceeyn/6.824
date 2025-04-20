@@ -8,7 +8,10 @@ package raft
 // test with the original before submitting.
 //
 
-import "testing"
+import (
+	"log"
+	"testing"
+)
 import "fmt"
 import "time"
 import "math/rand"
@@ -25,23 +28,25 @@ func TestInitialElection2A(t *testing.T) {
 	defer cfg.cleanup()
 
 	cfg.begin("Test (2A): initial election")
-
+	log.Printf("first check")
 	// is a leader elected?
 	cfg.checkOneLeader()
 
 	// sleep a bit to avoid racing with followers learning of the
-	// election, then check that all peers agree on the term.
+	// election, then check that all peers agree on the Term.
 	time.Sleep(50 * time.Millisecond)
 	term1 := cfg.checkTerms()
+	log.Printf("secondcheck")
 	if term1 < 1 {
-		t.Fatalf("term is %v, but should be at least 1", term1)
+		t.Fatalf("Term is %v, but should be at least 1", term1)
 	}
 
-	// does the leader+term stay the same if there is no network failure?
+	// does the leader+Term stay the same if there is no network failure?
 	time.Sleep(2 * RaftElectionTimeout)
 	term2 := cfg.checkTerms()
+	log.Printf("threecheck")
 	if term1 != term2 {
-		fmt.Printf("warning: term changed even though there were no failures")
+		fmt.Printf("warning: Term changed even though there were no failures")
 	}
 
 	// there should still be a leader.
@@ -58,13 +63,14 @@ func TestReElection2A(t *testing.T) {
 	cfg.begin("Test (2A): election after network failure")
 
 	leader1 := cfg.checkOneLeader()
-
+	log.Printf("first check--------------------------leader：%v", leader1)
 	// if the leader disconnects, a new one should be elected.
 	cfg.disconnect(leader1)
 	cfg.checkOneLeader()
 
 	// if the old leader rejoins, that shouldn't
 	// disturb the new leader.
+	log.Printf("second check--------------------------")
 	cfg.connect(leader1)
 	leader2 := cfg.checkOneLeader()
 
@@ -73,14 +79,17 @@ func TestReElection2A(t *testing.T) {
 	cfg.disconnect(leader2)
 	cfg.disconnect((leader2 + 1) % servers)
 	time.Sleep(2 * RaftElectionTimeout)
+	log.Printf("third check--------------------------")
 	cfg.checkNoLeader()
 
 	// if a quorum arises, it should elect a leader.
 	cfg.connect((leader2 + 1) % servers)
+	log.Printf("four check--------------------------")
 	cfg.checkOneLeader()
 
 	// re-join of last node shouldn't prevent leader from existing.
 	cfg.connect(leader2)
+	log.Printf("five check--------------------------")
 	cfg.checkOneLeader()
 
 	cfg.end()
@@ -109,10 +118,8 @@ func TestBasicAgree2B(t *testing.T) {
 	cfg.end()
 }
 
-//
 // check, based on counting bytes of RPCs, that
 // each command is sent to each peer just once.
-//
 func TestRPCBytes2B(t *testing.T) {
 	servers := 3
 	cfg := make_config(t, servers, false)
@@ -274,7 +281,7 @@ loop:
 
 		for j := 0; j < servers; j++ {
 			if t, _ := cfg.rafts[j].GetState(); t != term {
-				// term changed -- can't expect low RPC counts
+				// Term changed -- can't expect low RPC counts
 				continue loop
 			}
 		}
@@ -324,7 +331,7 @@ loop:
 	}
 
 	if !success {
-		t.Fatalf("term changed too often")
+		t.Fatalf("Term changed too often")
 	}
 
 	cfg.end()
@@ -343,7 +350,7 @@ func TestRejoin2B(t *testing.T) {
 	leader1 := cfg.checkOneLeader()
 	cfg.disconnect(leader1)
 
-	// make old leader try to agree on some entries
+	// make old leader try to agree on some Entries
 	cfg.rafts[leader1].Start(102)
 	cfg.rafts[leader1].Start(103)
 	cfg.rafts[leader1].Start(104)
@@ -490,7 +497,7 @@ loop:
 				continue loop
 			}
 			if !ok {
-				// No longer the leader, so term has changed
+				// No longer the leader, so Term has changed
 				continue loop
 			}
 			if starti+i != index1 {
@@ -502,7 +509,7 @@ loop:
 			cmd := cfg.wait(starti+i, servers, term)
 			if ix, ok := cmd.(int); ok == false || ix != cmds[i-1] {
 				if ix == -1 {
-					// term changed -- try again
+					// Term changed -- try again
 					continue loop
 				}
 				t.Fatalf("wrong value %v committed for index %v; expected %v\n", cmd, starti+i, cmds)
@@ -513,7 +520,7 @@ loop:
 		total2 = 0
 		for j := 0; j < servers; j++ {
 			if t, _ := cfg.rafts[j].GetState(); t != term {
-				// term changed -- can't expect low RPC counts
+				// Term changed -- can't expect low RPC counts
 				// need to keep going to update total2
 				failed = true
 			}
@@ -525,7 +532,7 @@ loop:
 		}
 
 		if total2-total1 > (iters+1+3)*3 {
-			t.Fatalf("too many RPCs (%v) for %v entries\n", total2-total1, iters)
+			t.Fatalf("too many RPCs (%v) for %v Entries\n", total2-total1, iters)
 		}
 
 		success = true
@@ -533,7 +540,7 @@ loop:
 	}
 
 	if !success {
-		t.Fatalf("term changed too often")
+		t.Fatalf("Term changed too often")
 	}
 
 	time.Sleep(RaftElectionTimeout)
@@ -672,16 +679,14 @@ func TestPersist32C(t *testing.T) {
 	cfg.end()
 }
 
-//
 // Test the scenarios described in Figure 8 of the extended Raft paper. Each
 // iteration asks a leader, if there is one, to insert a command in the Raft
 // log.  If there is a leader, that leader will fail quickly with a high
 // probability (perhaps without committing the command), or crash after a while
 // with low probability (most likey committing the command).  If the number of
 // alive servers isn't enough to form a majority, perhaps start a new server.
-// The leader in a new term may try to finish replicating log entries that
+// The leader in a new Term may try to finish replicating log Entries that
 // haven't been committed yet.
-//
 func TestFigure82C(t *testing.T) {
 	servers := 5
 	cfg := make_config(t, servers, false)

@@ -44,7 +44,7 @@ type config struct {
 	connected []bool   // whether each server is on the net
 	saved     []*Persister
 	endnames  [][]string            // the port file names each sends to
-	logs      []map[int]interface{} // copy of each server's committed entries
+	logs      []map[int]interface{} // copy of each server's committed Entries，相当于状态机
 	start     time.Time             // time at which make_config() was called
 	// begin()/end() statistics
 	t0        time.Time // time at which test_test.go called cfg.begin()
@@ -126,13 +126,11 @@ func (cfg *config) crash1(i int) {
 	}
 }
 
-//
 // start or re-start a Raft.
 // if one already exists, "kill" it first.
 // allocate new outgoing port file names, and a new
 // state persister, to isolate previous instance of
 // this server. since we cannot really kill it.
-//
 func (cfg *config) start1(i int) {
 	cfg.crash1(i)
 
@@ -301,29 +299,35 @@ func (cfg *config) setlongreordering(longrel bool) {
 // try a few times in case re-elections are needed.
 func (cfg *config) checkOneLeader() int {
 	for iters := 0; iters < 10; iters++ {
+		// 睡一会儿让新 leader 被选出来
 		ms := 450 + (rand.Int63() % 100)
 		time.Sleep(time.Duration(ms) * time.Millisecond)
-
+		log.Printf("checkOneLeader sleep: %v", time.Duration(ms)*time.Millisecond)
 		leaders := make(map[int][]int)
 		for i := 0; i < cfg.n; i++ {
 			if cfg.connected[i] {
+				log.Printf("1")
 				if term, leader := cfg.rafts[i].GetState(); leader {
 					leaders[term] = append(leaders[term], i)
 				}
+				log.Printf("%v is Leader ? %v, term: %v", cfg.rafts[i].me, cfg.rafts[i].isLeader, cfg.rafts[i].currentTerm)
 			}
 		}
-
+		log.Printf("2")
 		lastTermWithLeader := -1
 		for term, leaders := range leaders {
+			for _, leader := range leaders {
+				log.Printf("leader:%v", leader)
+			}
 			if len(leaders) > 1 {
-				cfg.t.Fatalf("term %d has %d (>1) leaders", term, len(leaders))
+				cfg.t.Fatalf("Term %d has %d (>1) leaders", term, len(leaders))
 			}
 			if term > lastTermWithLeader {
 				lastTermWithLeader = term
 			}
 		}
-
 		if len(leaders) != 0 {
+			log.Printf("final leader is %v", leaders[lastTermWithLeader][0])
 			return leaders[lastTermWithLeader][0]
 		}
 	}
@@ -331,7 +335,7 @@ func (cfg *config) checkOneLeader() int {
 	return -1
 }
 
-// check that everyone agrees on the term.
+// check that everyone agrees on the Term.
 func (cfg *config) checkTerms() int {
 	term := -1
 	for i := 0; i < cfg.n; i++ {
@@ -340,7 +344,10 @@ func (cfg *config) checkTerms() int {
 			if term == -1 {
 				term = xterm
 			} else if term != xterm {
-				cfg.t.Fatalf("servers disagree on term")
+				for _, raft := range cfg.rafts {
+					log.Printf("raft is leader: %v, raft echo is %v", raft.isLeader, raft.currentTerm)
+				}
+				cfg.t.Fatalf("servers disagree on Term")
 			}
 		}
 	}
