@@ -310,7 +310,7 @@ func (cfg *config) checkOneLeader() int {
 				if term, leader := cfg.rafts[i].GetState(); leader {
 					leaders[term] = append(leaders[term], i)
 				}
-				//log.Printf("%v is Leader ? %v, term: %v", cfg.rafts[i].me, cfg.rafts[i].isLeader, cfg.rafts[i].currentTerm)
+				//log.Printf("%v is Leader ? %v, Term: %v", cfg.rafts[i].me, cfg.rafts[i].isLeader, cfg.rafts[i].currentTerm)
 			}
 		}
 		log.Printf("2")
@@ -378,7 +378,8 @@ func (cfg *config) nCommitted(index int) (int, interface{}) {
 		cfg.mu.Lock()
 		cmd1, ok := cfg.logs[i][index]
 		cfg.mu.Unlock()
-
+		//DPrintf("cfg.logs[i]:%v,", cfg.logs[i])
+		DPrintf("cmd1:%v, ok: %v", cmd1, ok)
 		if ok {
 			if count > 0 && cmd != cmd1 {
 				cfg.t.Fatalf("committed values do not match: index %v, %v, %v\n",
@@ -456,6 +457,7 @@ func (cfg *config) one(cmd interface{}, expectedServers int, retry bool) int {
 				}
 			}
 		}
+		DPrintf("index1: %v", index)
 
 		if index != -1 {
 			// somebody claimed to be the leader and to have
@@ -463,6 +465,7 @@ func (cfg *config) one(cmd interface{}, expectedServers int, retry bool) int {
 			t1 := time.Now()
 			for time.Since(t1).Seconds() < 2 {
 				nd, cmd1 := cfg.nCommitted(index)
+				DPrintf("nd: %v, cmd1: %v", nd, cmd1)
 				if nd > 0 && nd >= expectedServers {
 					// committed
 					if cmd1 == cmd {

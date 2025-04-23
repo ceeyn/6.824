@@ -1,0 +1,26 @@
+=== RUN   TestBasicAgree2B
+Test (2B): basic agreement ...
+  ... Passed --   0.7  3   16    4112    3
+--- PASS: TestBasicAgree2B (0.72s)
+=== RUN   TestRPCBytes2B
+Test (2B): RPC byte count ...
+  ... Passed --   1.5  3   48  112924   11
+--- PASS: TestRPCBytes2B (1.47s)
+=== RUN   TestFailAgree2B
+Test (2B): agreement despite follower disconnection ...
+  ... Passed --   5.5  3  118   28934    8
+--- PASS: TestFailAgree2B (5.50s)
+=== RUN   TestFailNoAgree2B
+Test (2B): no agreement if too many followers disconnect ...
+    config.go:323: Term 1 has 2 (>1) leaders
+--- FAIL: TestFailNoAgree2B (0.97s)
+=== RUN   TestConcurrentStarts2B
+Test (2B): concurrent Start()s ...
+  ... Passed --   0.5  3   18    4932    6
+--- PASS: TestConcurrentStarts2B (0.50s)
+=== RUN   TestRejoin2B
+Test (2B): rejoin of partitioned leader ...
+  ... Passed --   6.2  3  190   44781    4
+--- PASS: TestRejoin2B (6.19s)
+=== RUN   TestBackup2B
+Test (2B): leader backs up quickly over incorrect follower logs ...
