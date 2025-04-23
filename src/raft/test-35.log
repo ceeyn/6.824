@@ -1,33 +1,22 @@
 === RUN   TestBasicAgree2B
 Test (2B): basic agreement ...
-  ... Passed --   0.8  3   16    4112    3
---- PASS: TestBasicAgree2B (0.77s)
+  ... Passed --   0.6  3   16    4117    3
+--- PASS: TestBasicAgree2B (0.58s)
 === RUN   TestRPCBytes2B
 Test (2B): RPC byte count ...
-  ... Passed --   1.5  3   48  113032   11
---- PASS: TestRPCBytes2B (1.54s)
+  ... Passed --   1.4  3   48  113026   11
+--- PASS: TestRPCBytes2B (1.37s)
 === RUN   TestFailAgree2B
 Test (2B): agreement despite follower disconnection ...
-  ... Passed --   5.5  3  126   30981    8
---- PASS: TestFailAgree2B (5.50s)
+  ... Passed --   5.5  3  134   32978    8
+--- PASS: TestFailAgree2B (5.55s)
 === RUN   TestFailNoAgree2B
 Test (2B): no agreement if too many followers disconnect ...
-  ... Passed --   3.5  5  208   42093    3
---- PASS: TestFailNoAgree2B (3.48s)
+  ... Passed --   3.4  5  236   45467    3
+--- PASS: TestFailNoAgree2B (3.38s)
 === RUN   TestConcurrentStarts2B
 Test (2B): concurrent Start()s ...
-  ... Passed --   0.6  3   20    5512    6
---- PASS: TestConcurrentStarts2B (0.56s)
+  ... Passed --   0.5  3   20    5481    6
+--- PASS: TestConcurrentStarts2B (0.50s)
 === RUN   TestRejoin2B
 Test (2B): rejoin of partitioned leader ...
-  ... Passed --   6.0  3  186   43704    4
---- PASS: TestRejoin2B (5.99s)
-=== RUN   TestBackup2B
-Test (2B): leader backs up quickly over incorrect follower logs ...
-  ... Passed --  16.6  5 2164 1101633  102
---- PASS: TestBackup2B (16.65s)
-=== RUN   TestCount2B
-Test (2B): RPC counts aren't too high ...
-  ... Passed --   1.9  3   58   16598   12
---- PASS: TestCount2B (1.94s)
-PASS

@@ -320,6 +320,9 @@ func (cfg *config) checkOneLeader() int {
 				log.Printf("leader:%v", leader)
 			}
 			if len(leaders) > 1 {
+				for _, leader := range leaders {
+					DPrintf("许多 leader：%v", leader)
+				}
 				cfg.t.Fatalf("Term %d has %d (>1) leaders", term, len(leaders))
 			}
 			if term > lastTermWithLeader {
