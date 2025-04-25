@@ -442,11 +442,12 @@ func TestBackup2B(t *testing.T) {
 	for i := 0; i < 50; i++ {
 		cfg.one(rand.Int(), 3, true)
 	}
-
+	DPrintf("TestBackup2B, final")
 	// now everyone
 	for i := 0; i < servers; i++ {
 		cfg.connect(i)
 	}
+	DPrintf("TestBackup2B, erveryOne")
 	cfg.one(rand.Int(), servers, true)
 
 	cfg.end()
