@@ -18,6 +18,7 @@ package raft
 //
 
 import (
+	"bytes"
 	"log"
 	"math/rand"
 	"sync"
@@ -25,6 +26,7 @@ import (
 )
 import "sync/atomic"
 import "../labrpc"
+import "../labgob"
 
 // import "bytes"
 // import "../labgob"
@@ -115,6 +117,21 @@ func (rf *Raft) persist() {
 	// e.Encode(rf.yyy)
 	// data := w.Bytes()
 	// rf.persister.SaveRaftState(data)
+	w := new(bytes.Buffer)
+	e := labgob.NewEncoder(w)
+	//rf.mu.Lock()
+	currentTerm := rf.currentTerm
+	votedFor := rf.votedFor
+	log := rf.log
+	//rf.mu.Unlock()
+	DPrintf("before persist....rf.me:%v, rf.currentTerm:%v, rf.votedFor:%v, rf.log:%v", rf.me, currentTerm,
+		votedFor, log)
+	e.Encode(currentTerm)
+	e.Encode(votedFor)
+	e.Encode(log)
+	data := w.Bytes()
+	DPrintf("finish persist....")
+	rf.persister.SaveRaftState(data)
 }
 
 // restore previously persisted state.
@@ -135,6 +152,23 @@ func (rf *Raft) readPersist(data []byte) {
 	//   rf.xxx = xxx
 	//   rf.yyy = yyy
 	// }
+	r := bytes.NewBuffer(data)
+	d := labgob.NewDecoder(r)
+	var currentTerm int
+	var votedFor int
+	var log []LogEntry
+	if d.Decode(&currentTerm) != nil || d.Decode(&votedFor) != nil || d.Decode(&log) != nil {
+		DPrintf("decode error....")
+	} else {
+		DPrintf("begin readPersist....")
+		rf.mu.Lock()
+		rf.currentTerm = currentTerm
+		rf.votedFor = votedFor
+		rf.log = log
+		rf.mu.Unlock()
+		DPrintf("finish readPersist....rf.me:%v, rf.currentTerm: %v, rf.votedfor: %v, rf.log:%v", rf.me,
+			currentTerm, votedFor, log)
+	}
 }
 
 // example RequestVote RPC arguments structure.
@@ -164,10 +198,10 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 
 	// todo
 	//rf.lastHeartbeatTime = time.Now()
-	DPrintf("sendRequestVote,args.Term:%v,args.CandidateId:%v"+
-		"rf.me：%v,rf.Term：%v,rf.voteFor：%v,rf.state：%v，args.LastLogTerm:%v,args.LastLogIndex:%v,curLastLogIndex: %v,"+
-		"curLastLogTerm : %v", args.Term,
-		args.CandidateId, rf.me, rf.currentTerm, rf.votedFor, rf.state, args.LastLogTerm, args.LastLogIndex, len(rf.log)-1, rf.log[len(rf.log)-1].Term)
+	//DPrintf("sendRequestVote,args.Term:%v,args.CandidateId:%v"+
+	//	"rf.me：%v,rf.Term：%v,rf.voteFor：%v,rf.state：%v，args.LastLogTerm:%v,args.LastLogIndex:%v,curLastLogIndex: %v,"+
+	//	"curLastLogTerm : %v", args.Term,
+	//	args.CandidateId, rf.me, rf.currentTerm, rf.votedFor, rf.state, args.LastLogTerm, args.LastLogIndex, len(rf.log)-1, rf.log[len(rf.log)-1].Term)
 	if args.Term < rf.currentTerm {
 		reply.Term = rf.currentTerm
 		reply.VoteGranted = false
@@ -187,7 +221,9 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	curLastLogTerm := 0
 	n := len(rf.log)
 	curLastLogIndex = n - 1
-	curLastLogTerm = rf.log[n-1].Term
+	if n-1 >= 0 {
+		curLastLogTerm = rf.log[n-1].Term
+	}
 	DPrintf("sendRequestVote,args.Term:%v,args.CandidateId:%v，rf.me：%v,rf.Term：%v,rf.voteFor：%v,rf.state：%v", args.Term,
 		args.CandidateId, rf.me, rf.currentTerm, rf.votedFor, rf.state)
 	if curLastLogTerm > args.LastLogTerm || (curLastLogTerm == args.LastLogTerm && args.LastLogIndex < curLastLogIndex) {
@@ -196,7 +232,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	}
 	if rf.votedFor == -1 || rf.votedFor == args.CandidateId {
 		rf.votedFor = args.CandidateId
-		//rf.resetElectionTimeout()
+		rf.persist()
 		rf.resetElectionTimer()
 		reply.VoteGranted = true
 		return
@@ -242,17 +278,10 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendReply) {
 	reply.Term = rf.currentTerm
 	DPrintf("AppendEntries,args.leaderId:%v,args.epoch:%v，args.preIndex: %v, args.preTerm: %v, rf.me：%v,rf.Term：%v,"+
 		"rf.voteFor：%v,rf.state：%v", args.LeaderId, args.LeaderEpoch, args.PreLogIndex, args.PreLogTerm, rf.me, rf.currentTerm, rf.votedFor, rf.state)
-	//rf.lastHeartbeatTime = time.Now()
-	//rf.resetElectionTimeout()
 	if args.PreLogIndex < 0 || args.PreLogIndex >= len(rf.log) || rf.log[args.PreLogIndex].Term != args.PreLogTerm {
 		reply.Success = false
 		return
 	}
-	//if args.PreLogIndex < rf.CommitId {
-	//	// committed entries 不能被覆盖！
-	//	reply.Success = false
-	//	return
-	//}
 	if args.PreLogIndex < len(rf.log) {
 		rf.log = rf.log[:args.PreLogIndex+1]
 	}
@@ -261,6 +290,7 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendReply) {
 	rf.log = append(rf.log, args.Entries...)
 	DPrintf("after leaderId: %v, rf.me: %v, LeaderCommit: %v, rf.log:%v", args.LeaderId,
 		rf.me, args.LeaderCommit, rf.log)
+	rf.persist()
 	//DPrintf("server: %v, append after log: %v", rf.me, rf.log)
 	//DPrintf("AppendEntries CommitId: %v", rf.CommitId)
 	if rf.CommitId < args.LeaderCommit {
@@ -270,7 +300,6 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendReply) {
 		if rf.CommitId < args.LeaderCommit {
 			rf.CommitId = min(args.LeaderCommit, len(rf.log)-1)
 		}
-
 	}
 	reply.Success = true
 }
@@ -388,6 +417,7 @@ func (rf *Raft) Start(command interface{}) (int, int, bool) {
 	n := len(rf.log)
 	index = n
 	rf.log = append(rf.log, LogEntry{term, command})
+	rf.persist()
 	DPrintf("%vstart rf.log:%v", rf.me, rf.log)
 	rf.mu.Unlock()
 	return index, term, isLeader
@@ -405,6 +435,9 @@ func (rf *Raft) Start(command interface{}) (int, int, bool) {
 func (rf *Raft) Kill() {
 	atomic.StoreInt32(&rf.dead, 1)
 	// Your code here, if desired.
+	rf.mu.Lock()
+	rf.persist()
+	rf.mu.Unlock()
 }
 
 func (rf *Raft) killed() bool {
@@ -416,8 +449,7 @@ func (rf *Raft) ConvertToCandidate() {
 	rf.state = Candidate
 	rf.currentTerm++
 	rf.votedFor = rf.me
-	//rf.lastHeartbeatTime = time.Now()
-	//rf.resetElectionTimeout()
+	rf.persist()
 	rf.resetElectionTimer()
 }
 
@@ -432,20 +464,15 @@ func (rf *Raft) ConvertToLeader() {
 		rf.nextIndex[server] = lastLogIndex
 		rf.matchIndex[server] = 0
 	}
-	//rf.lastHeartbeatTime = time.Now()
 }
 
 func (rf *Raft) ConvertToFollower(newTerm int) {
 	rf.state = Follower
 	rf.votedFor = -1
 	rf.currentTerm = newTerm
-	//rf.lastHeartbeatTime = time.Now()
-	//rf.resetElectionTimeout()
+	rf.persist()
 }
 
-func (rf *Raft) resetElectionTimeout() {
-	rf.electionOutTime = time.Duration(300+rand.Intn(200)) * time.Millisecond
-}
 func (rf *Raft) resetElectionTimer() {
 	rf.lastHeartbeatTime = time.Now()
 	rf.electionOutTime = time.Duration(200+rand.Intn(200)) * time.Millisecond
@@ -470,10 +497,21 @@ func Make(peers []*labrpc.ClientEnd, me int,
 	// rf.electionOutTime = time.Duration(200+rand.Float32()*150) * time.Millisecond
 	//rf.resetElectionTimeout()
 	rf.resetElectionTimer()
-	rf.votedFor = -1
 	//rf.lastHeartbeatTime = time.Time{}
-	rf.ConvertToFollower(0)
-	rf.log = append(rf.log, LogEntry{0, 20516})
+	//rf.state = Follower
+	//rf.votedFor = -1
+	//rf.currentTerm = 0
+	//rf.persister.mu.Lock()
+	pn := len(rf.persister.raftstate)
+	//rf.persister.mu.Unlock()
+	if pn == 0 {
+		rf.log = append(rf.log, LogEntry{0, 20516})
+		rf.ConvertToFollower(0)
+	}
+	//rf.ConvertToFollower(0)
+	//if len(rf.log) == 0 {
+	//	rf.log = append(rf.log, LogEntry{Term: 0}) // 初始化空日志（索引0占位）
+	//}
 	// Your initialization code here (2A, 2B, 2C).
 	// 开始心跳
 	go func() {
