@@ -255,6 +255,10 @@ type AppendEntriesArgs struct {
 type AppendReply struct {
 	Term    int
 	Success bool // 是否追加成功
+	// 冲突时才有用
+	Xterm  int
+	XIndex int
+	XLen   int
 }
 
 // AppendEntries 心跳/追加 rpc handler
@@ -278,7 +282,25 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendReply) {
 	reply.Term = rf.currentTerm
 	DPrintf("AppendEntries,args.leaderId:%v,args.epoch:%v，args.preIndex: %v, args.preTerm: %v, rf.me：%v,rf.Term：%v,"+
 		"rf.voteFor：%v,rf.state：%v", args.LeaderId, args.LeaderEpoch, args.PreLogIndex, args.PreLogTerm, rf.me, rf.currentTerm, rf.votedFor, rf.state)
-	if args.PreLogIndex < 0 || args.PreLogIndex >= len(rf.log) || rf.log[args.PreLogIndex].Term != args.PreLogTerm {
+	if args.PreLogIndex < 0 {
+		reply.Success = false
+		return
+	}
+	// 冲突优化
+	if args.PreLogIndex >= len(rf.log) {
+		reply.Xterm = -1
+		reply.XLen = len(rf.log)
+		reply.Success = false
+		return
+	}
+	if rf.log[args.PreLogIndex].Term != args.PreLogTerm {
+		// 找到冲突 term 的第一个 log
+		i := args.PreLogIndex
+		for ; i >= 0 && rf.log[i].Term == rf.log[args.PreLogIndex].Term; i-- {
+		}
+		i++
+		reply.XIndex = i
+		reply.Xterm = rf.log[args.PreLogIndex].Term
 		reply.Success = false
 		return
 	}
@@ -324,7 +346,28 @@ func (rf *Raft) sendRequestAppendEntries(server int, args *AppendEntriesArgs, re
 			return false
 		}
 		// 日志冲突
-		rf.nextIndex[server] = max(1, rf.nextIndex[server]-1)
+		//rf.nextIndex[server] = max(1, rf.nextIndex[server]-1)
+		// 冲突优化
+		if reply.Xterm == -1 {
+			// case 1
+			rf.nextIndex[server] = reply.XLen
+		} else {
+			// 每次回退一个 term
+			// case 2，假如follower 有 term 对应的日志
+			lastTermIndex := -1
+			for i := len(rf.log) - 1; i >= 1; i-- {
+				if rf.log[i].Term == reply.Xterm {
+					lastTermIndex = i
+					break
+				}
+			}
+			if lastTermIndex != -1 {
+				rf.nextIndex[server] = lastTermIndex + 1
+			} else {
+				// case 3
+				rf.nextIndex[server] = reply.XIndex
+			}
+		}
 		return false
 	}
 	rf.matchIndex[server] = args.PreLogIndex + len(args.Entries)
@@ -541,9 +584,8 @@ func Make(peers []*labrpc.ClientEnd, me int,
 						leaderId := rf.me
 						leaderEpoch := rf.currentTerm
 						var entries []LogEntry
-						for i := preLogIndex + 1; i < len(rf.log); i++ {
-							entries = append(entries, rf.log[i])
-						}
+						entries = make([]LogEntry, len(rf.log[preLogIndex+1:]))
+						copy(entries, rf.log[preLogIndex+1:])
 						rf.mu.Unlock()
 						var req *AppendEntriesArgs = &AppendEntriesArgs{Entries: entries, PreLogIndex: preLogIndex,
 							PreLogTerm: preLogTerm, LeaderCommit: leaderCommitId, LeaderId: leaderId,
@@ -555,10 +597,10 @@ func Make(peers []*labrpc.ClientEnd, me int,
 						}
 					}(i)
 				}
-				// 1s 10次心跳
-				time.Sleep(100 * time.Millisecond)
+				// 1s 10次心跳，100ms每次，但是需要更快的心跳才能通过2c
+				time.Sleep(70 * time.Millisecond)
 			} else {
-				time.Sleep(50 * time.Millisecond)
+				time.Sleep(30 * time.Millisecond)
 			}
 		}
 	}()
@@ -637,7 +679,6 @@ func Make(peers []*labrpc.ClientEnd, me int,
 			for _, msg := range msgs {
 				DPrintf("id: %v, msg: %v", rf.me, msg)
 				applyCh <- msg
-
 			}
 		}
 	}()
