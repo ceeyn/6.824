@@ -13,7 +13,7 @@ import "sync"
 
 type Persister struct {
 	mu        sync.Mutex
-	raftstate []byte // currentTerm, voteFor，log
+	raftstate []byte // CurrentTerm, voteFor，log
 	snapshot  []byte
 }
 

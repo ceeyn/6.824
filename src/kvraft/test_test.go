@@ -213,6 +213,7 @@ func GenericTest(t *testing.T, part string, nclients int, unreliable bool, crash
 				} else {
 					// log.Printf("%d: client new get %v\n", cli, key)
 					v := Get(cfg, myck, key)
+					DPrintf("get test key:%v, val:%v", key, v)
 					if v != last {
 						log.Fatalf("get wrong value, key %v, wanted:\n%v\n, got\n%v\n", key, last, v)
 					}
@@ -511,7 +512,7 @@ func TestOnePartition3A(t *testing.T) {
 	ckp1 := cfg.makeClient(p1)  // connect ckp1 to p1
 	ckp2a := cfg.makeClient(p2) // connect ckp2a to p2
 	ckp2b := cfg.makeClient(p2) // connect ckp2b to p2
-
+	DPrintf("begin put  progress in majority")
 	Put(cfg, ckp1, "1", "14")
 	check(cfg, t, ckp1, "1", "14")
 
@@ -545,13 +546,12 @@ func TestOnePartition3A(t *testing.T) {
 	cfg.end()
 
 	cfg.begin("Test: completion after heal (3A)")
-
+	DPrintf("completion after heal")
 	cfg.ConnectAll()
 	cfg.ConnectClient(ckp2a, cfg.All())
 	cfg.ConnectClient(ckp2b, cfg.All())
 
 	time.Sleep(electionTimeout)
-
 	select {
 	case <-done0:
 	case <-time.After(30 * 100 * time.Millisecond):
@@ -610,12 +610,10 @@ func TestPersistPartitionUnreliableLinearizable3A(t *testing.T) {
 	GenericTestLinearizability(t, "3A", 15, 7, true, true, true, -1)
 }
 
-//
 // if one server falls behind, then rejoins, does it
 // recover by using the InstallSnapshot RPC?
 // also checks that majority discards committed log entries
 // even if minority doesn't respond.
-//
 func TestSnapshotRPC3B(t *testing.T) {
 	const nservers = 3
 	maxraftstate := 1000

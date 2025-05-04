@@ -1,0 +1,42 @@
+=== RUN   TestBasic3A
+Test: one client (3A) ...
+  ... Passed --  15.4  5  7412  216
+--- PASS: TestBasic3A (15.38s)
+=== RUN   TestConcurrent3A
+Test: many clients (3A) ...
+  ... Passed --  16.2  5  8406 1080
+--- PASS: TestConcurrent3A (16.18s)
+=== RUN   TestUnreliable3A
+Test: unreliable net, many clients (3A) ...
+  ... Passed --  16.5  5  2804  796
+--- PASS: TestUnreliable3A (16.49s)
+=== RUN   TestUnreliableOneKey3A
+Test: concurrent append to same key, unreliable (3A) ...
+  ... Passed --   1.7  3   186   52
+--- PASS: TestUnreliableOneKey3A (1.69s)
+=== RUN   TestOnePartition3A
+Test: progress in majority (3A) ...
+  ... Passed --   0.4  5    56    2
+Test: no progress in minority (3A) ...
+  ... Passed --   1.2  5   154    3
+Test: completion after heal (3A) ...
+  ... Passed --   1.1  5   232    3
+--- PASS: TestOnePartition3A (2.87s)
+=== RUN   TestManyPartitionsOneClient3A
+Test: partitions, one client (3A) ...
+  ... Passed --  22.5  5  9980  217
+--- PASS: TestManyPartitionsOneClient3A (22.53s)
+=== RUN   TestManyPartitionsManyClients3A
+Test: partitions, many clients (3A) ...
+  ... Passed --  23.5  5 15234  953
+--- PASS: TestManyPartitionsManyClients3A (23.51s)
+=== RUN   TestPersistOneClient3A
+Test: restarts, one client (3A) ...
+  ... Passed --  19.1  5 31114  216
+--- PASS: TestPersistOneClient3A (19.11s)
+=== RUN   TestPersistConcurrent3A
+Test: restarts, many clients (3A) ...
+  ... Passed --  19.9  5 56033 1080
+--- PASS: TestPersistConcurrent3A (19.86s)
+=== RUN   TestPersistConcurrentUnreliable3A
+Test: unreliable net, restarts, many clients (3A) ...
