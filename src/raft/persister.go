@@ -13,8 +13,8 @@ import "sync"
 
 type Persister struct {
 	mu        sync.Mutex
-	raftstate []byte // CurrentTerm, voteFor，log
-	snapshot  []byte
+	raftstate []byte // CurrentTerm, voteFor，log，log 里是当前所有日志（应用，已提交未应用，未提交），用于 raft 奔溃恢复的场景
+	snapshot  []byte // snapShot 里是状态机，用于 server 奔溃恢复，flower落后太多的场景
 }
 
 func MakePersister() *Persister {
