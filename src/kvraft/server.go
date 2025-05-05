@@ -4,6 +4,7 @@ import (
 	"../labgob"
 	"../labrpc"
 	"../raft"
+	"bytes"
 	"log"
 	"sync"
 	"sync/atomic"
@@ -54,24 +55,19 @@ type KVServer struct {
 	kvs        map[string]string
 	// 每个 index 对应的通道
 	indexChan map[int]chan ApplyNotifyMsg
+	//// 用作状态超过 maxraftstate 的通知
+	//snapSizeCond *sync.Cond
+	//snapSizeFlag bool
 }
 type ApplyNotifyMsg struct {
 	value string
-	//term  int
-	//finalIndex int
-	err  Err
-	term int
+	err   Err
+	term  int
 }
 
 func (kv *KVServer) Get(args *GetArgs, reply *GetReply) {
 	// Your code here.
 	cliId := args.CliId
-	//lastId, _ := kv.lastResult[cliId]
-	//if lastId >= args.Seq {
-	//	reply.Err = ErrRepeat
-	//	kv.mu.Unlock()
-	//	return
-	//}
 	op := Op{CommandType: GET, Key: args.Key, Seq: args.Seq, CliId: cliId}
 	//DPrintf("begin start get: %v", op)
 	index, term, isLeader := kv.rf.Start(op)
@@ -102,22 +98,11 @@ func (kv *KVServer) Get(args *GetArgs, reply *GetReply) {
 	delete(kv.indexChan, index)
 	DPrintf("delete chan %v", index)
 	kv.mu.Unlock()
-	//res := <-kv.indexChan[index]
-	//if res.term == term && index == res.finalIndex {
-	//	kv.lastResult[cliId] = args.Seq
-	//	reply.Err = OK
-	//	reply.Value = res.value
-	//}
 }
 
 func (kv *KVServer) PutAppend(args *PutAppendArgs, reply *PutAppendReply) {
 	// Your code here.
 	cliId := args.CliId
-	//lastId, _ := kv.lastResult[cliId]
-	//if lastId >= args.Seq {
-	//	reply.Err = ErrRepeat
-	//	return
-	//}
 	op := Op{CommandType: CommandType(args.Op), Key: args.Key, Value: args.Value, Seq: args.Seq, CliId: cliId}
 	DPrintf("begin start putappend: %v", op)
 	index, term, isLeader := kv.rf.Start(op)
@@ -167,38 +152,86 @@ func (kv *KVServer) killed() bool {
 	z := atomic.LoadInt32(&kv.dead)
 	return z == 1
 }
+func AbsInt(x int) int {
+	if x < 0 {
+		return -x
+	}
+	return x
+}
 
-//func (kv *KVServer) doGet(op Op) {
-//	kv.mu.Lock()
-//	defer kv.mu.Unlock()
-//	val := kv.kvs[op.Key]
-//	index := op.Seq
-//	res := ApplyNotifyMsg{err: OK, value: val}
-//	kv.indexChan[index] <- res
-//}
-//
-//func (kv *KVServer) doAppend(op Op) {
-//	kv.mu.Lock()
-//	defer kv.mu.Unlock()
-//	val, ex := kv.kvs[op.Key]
-//	if !ex {
-//		kv.kvs[op.Key] = op.Value
-//	} else {
-//		kv.kvs[op.Key] = kv.kvs[op.Key] + op.Value
-//	}
-//	index := op.Seq
-//	res := ApplyNotifyMsg{err: OK}
-//	kv.indexChan[index] <- res
-//}
-//
-//func (kv *KVServer) doPut(op Op) {
-//	kv.mu.Lock()
-//	defer kv.mu.Unlock()
-//	kv.kvs[op.Key] = op.Value
-//	index := op.Seq
-//	res := ApplyNotifyMsg{err: OK}
-//	kv.indexChan[index] <- res
-//}
+func (kv *KVServer) readSnapShot(data []byte) {
+	if data == nil || len(data) < 1 { // bootstrap without any state?
+		return
+	}
+	DPrintf("begin readSnapShot....")
+	r := bytes.NewBuffer(data)
+	d := labgob.NewDecoder(r)
+	var kvs map[string]string
+	if d.Decode(&kvs) != nil {
+		DPrintf("readSnapShot decode error....")
+	} else {
+		kv.mu.Lock()
+		kv.kvs = kvs
+		kv.mu.Unlock()
+		DPrintf("finish readSnapShot....kv.me:%v , kv.kvs:%v", kv.me,
+			kvs)
+	}
+	//kv.mu.Lock()
+	//defer kv.mu.Lock()
+}
+
+func (kv *KVServer) applyOP(msg raft.ApplyMsg) bool {
+	op, ok := msg.Command.(Op)
+	DPrintf("msg 内容：%v", msg)
+	if !ok {
+		log.Printf("转换出错, 内容：%v", msg)
+		return false
+	}
+	commandType := op.CommandType
+	var notifyMsg ApplyNotifyMsg
+	kv.mu.Lock()
+	DPrintf("%v begin, apply: %v", kv.me, op)
+	if maxSeq, ok := kv.lastResult[op.CliId]; ok && op.Seq <= maxSeq {
+		if commandType == GET {
+			notifyMsg.value = kv.kvs[op.Key]
+		}
+		DPrintf("repeat request, key: %v, type: %v", op.Key, commandType)
+		notifyMsg.err = OK
+	} else {
+		switch commandType {
+		case GET:
+			notifyMsg.value = kv.kvs[op.Key]
+			DPrintf("apply, get: %v", notifyMsg.value)
+		case APPEND:
+			if val, exists := kv.kvs[op.Key]; exists {
+				kv.kvs[op.Key] = val + op.Value
+				DPrintf("apply, append: %v", kv.kvs[op.Key])
+			} else {
+				kv.kvs[op.Key] = op.Value
+				DPrintf("apply, append: %v", kv.kvs[op.Key])
+			}
+		case PUT:
+			kv.kvs[op.Key] = op.Value
+			DPrintf("apply, put: %v", kv.kvs[op.Key])
+		}
+		kv.lastResult[op.CliId] = op.Seq
+	}
+	notifyMsg.err = OK
+	currentTerm, _ := kv.rf.GetState()
+	notifyMsg.term = currentTerm
+	ch, ex := kv.indexChan[msg.CommandIndex]
+	if !ex {
+		DPrintf("%v chan don't exist", msg)
+		kv.mu.Unlock()
+		return false
+	} else {
+		kv.mu.Unlock()
+		// 通知等待的RPC处理程序
+		DPrintf("sendindexChan, msg: %v", notifyMsg)
+		ch <- notifyMsg
+		return true
+	}
+}
 
 // servers[] contains the ports of the set of
 // servers that will cooperate via Raft to
@@ -212,6 +245,7 @@ func (kv *KVServer) killed() bool {
 // you don't need to snapshot.
 // StartKVServer() must return quickly, so it should start goroutines
 // for any long-running work.
+
 func StartKVServer(servers []*labrpc.ClientEnd, me int, persister *raft.Persister, maxraftstate int) *KVServer {
 	// call labgob.Register on structures you want
 	// Go's RPC library to marshall/unmarshall.
@@ -228,62 +262,34 @@ func StartKVServer(servers []*labrpc.ClientEnd, me int, persister *raft.Persiste
 
 	kv.applyCh = make(chan raft.ApplyMsg, 100)
 	kv.rf = raft.Make(servers, me, persister, kv.applyCh)
+	//kv.snapSizeCond = sync.NewCond(&kv.mu)
+	//kv.snapSizeFlag = false
 	go func() {
 		for !kv.killed() {
 			msg := <-kv.applyCh
-			op, ok := msg.Command.(Op)
-			DPrintf("msg 内容：%v", msg)
-			if !ok {
-				log.Printf("转换出错, 内容：%v", msg)
-				continue
-			}
-			commandType := op.CommandType
-			var notifyMsg ApplyNotifyMsg
-			kv.mu.Lock()
-			DPrintf("%v begin, apply: %v", kv.me, op)
-			if maxSeq, ok := kv.lastResult[op.CliId]; ok && op.Seq <= maxSeq {
-				if commandType == GET {
-					notifyMsg.value = kv.kvs[op.Key]
+			if msg.CommandValid {
+				// kv应用
+				ok := kv.applyOP(msg)
+				if !ok {
+					continue
 				}
-				DPrintf("repeat request, key: %v, type: %v", op.Key, commandType)
-				notifyMsg.err = OK
 			} else {
-				switch commandType {
-				case GET:
-					notifyMsg.value = kv.kvs[op.Key]
-					DPrintf("apply, get: %v", notifyMsg.value)
-				case APPEND:
-					if val, exists := kv.kvs[op.Key]; exists {
-						kv.kvs[op.Key] = val + op.Value
-						DPrintf("apply, append: %v", kv.kvs[op.Key])
-					} else {
-						kv.kvs[op.Key] = op.Value
-						DPrintf("apply, append: %v", kv.kvs[op.Key])
-					}
-				case PUT:
-					kv.kvs[op.Key] = op.Value
-					DPrintf("apply, put: %v", kv.kvs[op.Key])
-				}
-				kv.lastResult[op.CliId] = op.Seq
-			}
-			notifyMsg.err = OK
-			currentTerm, _ := kv.rf.GetState()
-			notifyMsg.term = currentTerm
-			ch, ex := kv.indexChan[msg.CommandIndex]
-			if !ex {
-				DPrintf("%v chan don't exist", msg)
-				kv.mu.Unlock()
-				continue
-
-			} else {
-				kv.mu.Unlock()
-				// 通知等待的RPC处理程序
-				DPrintf("sendindexChan, msg: %v", notifyMsg)
-				ch <- notifyMsg
+				// 快照
+				kv.readSnapShot(msg.Command.([]byte))
 			}
 		}
 	}()
 	// You may need initialization code here.
-
+	if maxraftstate != -1 {
+		go func() {
+			for !kv.killed() {
+				if AbsInt(persister.RaftStateSize()-maxraftstate) <= 100 {
+					kv.rf.cupLogExceedMaxSizeAndSaveSnapShot(kv.kvs)
+				}
+				time.Sleep(200 * time.Millisecond)
+			}
+		}()
+	}
+	kv.readSnapShot(persister.ReadSnapshot())
 	return kv
 }
