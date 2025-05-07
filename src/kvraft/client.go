@@ -93,6 +93,7 @@ func (ck *Clerk) PutAppend(key string, value string, op string) {
 			continue
 		}
 		ck.mu.Lock()
+		DPrintf("cli putAppend:req:%v, reply:%v", args, reply)
 		ck.leaderId = serverId
 		ck.mu.Unlock()
 		return

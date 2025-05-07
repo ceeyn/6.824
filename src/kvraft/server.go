@@ -68,6 +68,17 @@ type ApplyNotifyMsg struct {
 func (kv *KVServer) Get(args *GetArgs, reply *GetReply) {
 	// Your code here.
 	cliId := args.CliId
+	// 如果不做这步，超时的情况虽然不会让状态机重复执行，但是会让 log 一直重复增长, 而且因为对于一个 cli 来说只能同步执行，所以会一直超时重试
+	// 让后面的命令全都执行不了
+	kv.mu.Lock()
+	if maxSeq, ok := kv.lastResult[cliId]; ok && args.Seq <= maxSeq {
+		reply.Value = kv.kvs[args.Key]
+		reply.Err = OK
+		DPrintf("get repeat request, key: %v", args.Key)
+		kv.mu.Unlock()
+		return
+	}
+	kv.mu.Unlock()
 	op := Op{CommandType: GET, Key: args.Key, Seq: args.Seq, CliId: cliId}
 	//DPrintf("begin start get: %v", op)
 	index, term, isLeader := kv.rf.Start(op)
@@ -103,6 +114,14 @@ func (kv *KVServer) Get(args *GetArgs, reply *GetReply) {
 func (kv *KVServer) PutAppend(args *PutAppendArgs, reply *PutAppendReply) {
 	// Your code here.
 	cliId := args.CliId
+	kv.mu.Lock()
+	if maxSeq, ok := kv.lastResult[cliId]; ok && args.Seq <= maxSeq {
+		reply.Err = OK
+		DPrintf("PutAppend repeat request, key: %v", args.Key)
+		kv.mu.Unlock()
+		return
+	}
+	kv.mu.Unlock()
 	op := Op{CommandType: CommandType(args.Op), Key: args.Key, Value: args.Value, Seq: args.Seq, CliId: cliId}
 	DPrintf("begin start putappend: %v", op)
 	index, term, isLeader := kv.rf.Start(op)
@@ -195,24 +214,24 @@ func (kv *KVServer) applyOP(msg raft.ApplyMsg) bool {
 		if commandType == GET {
 			notifyMsg.value = kv.kvs[op.Key]
 		}
-		DPrintf("repeat request, key: %v, type: %v", op.Key, commandType)
+		DPrintf("%v repeat request, key: %v, type: %v", kv.me, op.Key, commandType)
 		notifyMsg.err = OK
 	} else {
 		switch commandType {
 		case GET:
 			notifyMsg.value = kv.kvs[op.Key]
-			DPrintf("apply, get: %v", notifyMsg.value)
+			DPrintf("%v apply, get: %v", kv.me, notifyMsg.value)
 		case APPEND:
 			if val, exists := kv.kvs[op.Key]; exists {
 				kv.kvs[op.Key] = val + op.Value
-				DPrintf("apply, append: %v", kv.kvs[op.Key])
+				DPrintf("%v apply, append: %v", kv.me, kv.kvs[op.Key])
 			} else {
 				kv.kvs[op.Key] = op.Value
-				DPrintf("apply, append: %v", kv.kvs[op.Key])
+				DPrintf("%v apply, append: %v", kv.me, kv.kvs[op.Key])
 			}
 		case PUT:
 			kv.kvs[op.Key] = op.Value
-			DPrintf("apply, put: %v", kv.kvs[op.Key])
+			DPrintf("%v apply, put: %v", kv.me, kv.kvs[op.Key])
 		}
 		kv.lastResult[op.CliId] = op.Seq
 	}
@@ -227,7 +246,7 @@ func (kv *KVServer) applyOP(msg raft.ApplyMsg) bool {
 	} else {
 		kv.mu.Unlock()
 		// 通知等待的RPC处理程序
-		DPrintf("sendindexChan, msg: %v", notifyMsg)
+		DPrintf("%v sendindexChan, msg: %v", kv.me, notifyMsg)
 		ch <- notifyMsg
 		return true
 	}
@@ -268,28 +287,35 @@ func StartKVServer(servers []*labrpc.ClientEnd, me int, persister *raft.Persiste
 		for !kv.killed() {
 			msg := <-kv.applyCh
 			if msg.CommandValid {
+				// 每次快照实际内容的更新其实在应用appId上，所有在这更新，而不是每次log增加的时候
+				if maxraftstate != -1 && persister.RaftStateSize() > 0 &&
+					float64(persister.RaftStateSize())/float64(maxraftstate) >= 0.95 {
+					DPrintf("maxraftstate:%v,persister.RaftStateSize():%v", float64(maxraftstate), float64(persister.RaftStateSize()))
+					kv.rf.CupLogExceedMaxSizeAndSaveSnapShot(kv.kvs)
+				}
 				// kv应用
 				ok := kv.applyOP(msg)
 				if !ok {
 					continue
 				}
 			} else {
+				DPrintf("receve snapShot")
 				// 快照
 				kv.readSnapShot(msg.Command.([]byte))
 			}
 		}
 	}()
 	// You may need initialization code here.
-	if maxraftstate != -1 {
-		go func() {
-			for !kv.killed() {
-				if AbsInt(persister.RaftStateSize()-maxraftstate) <= 100 {
-					kv.rf.cupLogExceedMaxSizeAndSaveSnapShot(kv.kvs)
-				}
-				time.Sleep(200 * time.Millisecond)
-			}
-		}()
-	}
+	//if maxraftstate != -1 {
+	//	go func() {
+	//		for !kv.killed() {
+	//			if AbsInt(persister.RaftStateSize()-maxraftstate) <= 100 {
+	//				kv.rf.CupLogExceedMaxSizeAndSaveSnapShot(kv.kvs)
+	//			}
+	//			time.Sleep(200 * time.Millisecond)
+	//		}
+	//	}()
+	//}
 	kv.readSnapShot(persister.ReadSnapshot())
 	return kv
 }

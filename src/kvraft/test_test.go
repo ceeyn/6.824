@@ -83,6 +83,7 @@ func checkClntAppends(t *testing.T, clnt int, v string, count int) {
 		wanted := "x " + strconv.Itoa(clnt) + " " + strconv.Itoa(j) + " y"
 		off := strings.Index(v, wanted)
 		if off < 0 {
+			DPrintf("checkClntAppends fail.......")
 			t.Fatalf("%v missing element %v in Append result %v", clnt, wanted, v)
 		}
 		off1 := strings.LastIndex(v, wanted)
@@ -615,6 +616,7 @@ func TestPersistPartitionUnreliableLinearizable3A(t *testing.T) {
 // also checks that majority discards committed log entries
 // even if minority doesn't respond.
 func TestSnapshotRPC3B(t *testing.T) {
+	DPrintf("-1 check...........")
 	const nservers = 3
 	maxraftstate := 1000
 	cfg := make_config(t, nservers, false, maxraftstate)
@@ -626,7 +628,7 @@ func TestSnapshotRPC3B(t *testing.T) {
 
 	Put(cfg, ck, "a", "A")
 	check(cfg, t, ck, "a", "A")
-
+	DPrintf("0 check...........")
 	// a bunch of puts into the majority partition.
 	cfg.partition([]int{0, 1}, []int{2})
 	{
@@ -637,7 +639,7 @@ func TestSnapshotRPC3B(t *testing.T) {
 		time.Sleep(electionTimeout)
 		Put(cfg, ck1, "b", "B")
 	}
-
+	DPrintf("first check...........")
 	// check that the majority partition has thrown away
 	// most of its log entries.
 	sz := cfg.LogSize()
@@ -657,7 +659,7 @@ func TestSnapshotRPC3B(t *testing.T) {
 		check(cfg, t, ck1, "1", "1")
 		check(cfg, t, ck1, "49", "49")
 	}
-
+	DPrintf("second check...........")
 	// now everybody
 	cfg.partition([]int{0, 1, 2}, []int{})
 
@@ -681,7 +683,7 @@ func TestSnapshotSize3B(t *testing.T) {
 	ck := cfg.makeClient(cfg.All())
 
 	cfg.begin("Test: snapshot size is reasonable (3B)")
-
+	DPrintf("TestSnapshotSize3B first check...........")
 	for i := 0; i < 200; i++ {
 		Put(cfg, ck, "x", "0")
 		check(cfg, t, ck, "x", "0")
@@ -694,7 +696,7 @@ func TestSnapshotSize3B(t *testing.T) {
 	if sz > 8*maxraftstate {
 		t.Fatalf("logs were not trimmed (%v > 8*%v)", sz, maxraftstate)
 	}
-
+	DPrintf("TestSnapshotSize3B second check...........")
 	// check that the snapshots are not unreasonably large
 	ssz := cfg.SnapshotSize()
 	if ssz > maxsnapshotstate {
