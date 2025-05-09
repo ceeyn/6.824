@@ -203,12 +203,25 @@ func (kv *KVServer) readSnapShot(data []byte) {
 	// 如果不保存这个，就会出现刚开始日志提交了两个重复的 append，假如 server 挂了重新恢复的时候，维护的每个 cli最后一个的值没了，
 	// 这个时候重新执行就会执行成功。
 	var lastResult map[int]int
+	var LastIncludedIndex int
+	var LastIncludedTerm int
+
+	if err := d.Decode(&LastIncludedIndex); err != nil {
+		DPrintf("server readSnapShot decode error LastIncludedIndex error: %v", err)
+		return
+	}
+
+	if err := d.Decode(&LastIncludedTerm); err != nil {
+		DPrintf("server readSnapShot decode error LastIncludedTerm error: %v", err)
+		return
+	}
+
 	if d.Decode(&kvs) != nil {
-		DPrintf("readSnapShot decode kvs error....")
+		DPrintf("readSnapShot decode error  kvs error....")
 		return
 	}
 	if d.Decode(&lastResult) != nil {
-		DPrintf("readSnapShot decode lastResult error....")
+		DPrintf("readSnapShot decode error lastResult error....")
 		return
 	}
 
@@ -260,7 +273,7 @@ func (kv *KVServer) applyOP(msg raft.ApplyMsg) bool {
 			DPrintf("%v apply, put: %v", kv.me, kv.kvs[op.Key])
 		}
 		kv.lastResult[op.CliId] = op.Seq
-		// 更新 ApplyId
+		// 更新 lastApplied
 		kv.rf.UpdateApplyId(msg.CommandIndex)
 	}
 	notifyMsg.err = OK
@@ -307,7 +320,7 @@ func StartKVServer(servers []*labrpc.ClientEnd, me int, persister *raft.Persiste
 	kv.lastResult = make(map[int]int)
 	kv.indexChan = make(map[int]chan ApplyNotifyMsg)
 
-	kv.applyCh = make(chan raft.ApplyMsg, 100)
+	kv.applyCh = make(chan raft.ApplyMsg)
 	kv.rf = raft.Make(servers, me, persister, kv.applyCh)
 	//kv.snapSizeCond = sync.NewCond(&kv.mu)
 	//kv.snapSizeFlag = false
@@ -328,7 +341,7 @@ func StartKVServer(servers []*labrpc.ClientEnd, me int, persister *raft.Persiste
 				// cut，但是快照只存了 260，就会出现发出去的快照只包含 260，但是让接收者的 lastIncluded 更新到 265，进而 nextIndex 到了 265
 				// 下次 leader 再发的时候中间 260到 265的所有东西都没了
 				if maxraftstate != -1 && persister.RaftStateSize() > 0 &&
-					float64(persister.RaftStateSize())/float64(maxraftstate) >= 0.95 {
+					float64(persister.RaftStateSize())/float64(maxraftstate) >= 0.99 {
 					DPrintf("%v maxraftstate:%v,persister.RaftStateSize():%v", kv.me, float64(maxraftstate),
 						float64(persister.RaftStateSize()))
 					kv.rf.CupLogExceedMaxSizeAndSaveSnapShot(kv.kvs, kv.lastResult, msg.CommandIndex)
