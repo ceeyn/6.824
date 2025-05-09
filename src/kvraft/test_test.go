@@ -88,6 +88,7 @@ func checkClntAppends(t *testing.T, clnt int, v string, count int) {
 		}
 		off1 := strings.LastIndex(v, wanted)
 		if off1 != off {
+			DPrintf("checkClntAppends fail1.......")
 			t.Fatalf("duplicate element %v in Append result", wanted)
 		}
 		if off <= lastoff {
@@ -214,7 +215,7 @@ func GenericTest(t *testing.T, part string, nclients int, unreliable bool, crash
 				} else {
 					// log.Printf("%d: client new get %v\n", cli, key)
 					v := Get(cfg, myck, key)
-					DPrintf("get test key:%v, val:%v", key, v)
+					DPrintf("%v get test key:%v, val:%v", myck.cliId, key, v)
 					if v != last {
 						log.Fatalf("get wrong value, key %v, wanted:\n%v\n, got\n%v\n", key, last, v)
 					}

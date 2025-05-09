@@ -74,7 +74,7 @@ func (kv *KVServer) Get(args *GetArgs, reply *GetReply) {
 	if maxSeq, ok := kv.lastResult[cliId]; ok && args.Seq <= maxSeq {
 		reply.Value = kv.kvs[args.Key]
 		reply.Err = OK
-		DPrintf("get repeat request, key: %v", args.Key)
+		DPrintf("%v get repeat request, key: %v, val:%v", kv.me, args.Key, reply.Value)
 		kv.mu.Unlock()
 		return
 	}
@@ -100,14 +100,14 @@ func (kv *KVServer) Get(args *GetArgs, reply *GetReply) {
 			reply.Value = res.value
 			reply.Err = res.err
 		}
-		DPrintf("get indexChan: %v", res)
+		DPrintf("%v get indexChan: %v", kv.me, res)
 	case <-time.After(RaftTimeout):
 		reply.Err = ErrTimeOut
-		DPrintf("get timeOut in %v", index)
+		DPrintf("%v get timeOut in %v", kv.me, index)
 	}
 	kv.mu.Lock()
 	delete(kv.indexChan, index)
-	DPrintf("delete chan %v", index)
+	DPrintf("%v delete chan %v", kv.me, index)
 	kv.mu.Unlock()
 }
 
@@ -117,13 +117,13 @@ func (kv *KVServer) PutAppend(args *PutAppendArgs, reply *PutAppendReply) {
 	kv.mu.Lock()
 	if maxSeq, ok := kv.lastResult[cliId]; ok && args.Seq <= maxSeq {
 		reply.Err = OK
-		DPrintf("PutAppend repeat request, key: %v", args.Key)
+		DPrintf("%v PutAppend repeat request, key: %v", kv.me, args.Key)
 		kv.mu.Unlock()
 		return
 	}
 	kv.mu.Unlock()
 	op := Op{CommandType: CommandType(args.Op), Key: args.Key, Value: args.Value, Seq: args.Seq, CliId: cliId}
-	DPrintf("begin start putappend: %v", op)
+	DPrintf("%v begin start putappend: %v", kv.me, op)
 	index, term, isLeader := kv.rf.Start(op)
 	if !isLeader {
 		reply.Err = ErrWrongLeader
@@ -141,15 +141,15 @@ func (kv *KVServer) PutAppend(args *PutAppendArgs, reply *PutAppendReply) {
 			reply.Err = ErrWrongLeader
 		} else {
 			reply.Err = res.err
-			DPrintf("PutAppend indexChan: %v", res)
+			DPrintf("%v PutAppend indexChan: %v", kv.me, res)
 		}
 	case <-time.After(RaftTimeout):
 		reply.Err = ErrTimeOut
-		DPrintf("PutAppend timeOut in %v", index)
+		DPrintf("%v PutAppend timeOut in %v", kv.me, index)
 	}
 	kv.mu.Lock()
 	delete(kv.indexChan, index)
-	DPrintf("delete chan %v", index)
+	DPrintf("%v delete chan %v", kv.me, index)
 	kv.mu.Unlock()
 }
 
@@ -178,23 +178,49 @@ func AbsInt(x int) int {
 	return x
 }
 
+//// 保存应用层 server 持久化状态 快照，lastResult
+//func (kv *KVServer) saveSnapShot() []byte {
+//	kv.mu.Lock()
+//	defer kv.mu.Unlock()
+//	DPrintf("%v begin saveSnapShot....kv.kvs:%v, kv.lastResult:%v", kv.me, kv.kvs, kv.lastResult)
+//	w := new(bytes.Buffer)
+//	e := labgob.NewEncoder(w)
+//	e.Encode(kv.kvs)
+//	e.Encode(kv.lastResult)
+//	data := w.Bytes()
+//	kv.rf.SaveSnapShot(data)
+//	return data
+//}
+
 func (kv *KVServer) readSnapShot(data []byte) {
 	if data == nil || len(data) < 1 { // bootstrap without any state?
 		return
 	}
-	DPrintf("begin readSnapShot....")
+	DPrintf("%v begin readSnapShot....", kv.me)
 	r := bytes.NewBuffer(data)
 	d := labgob.NewDecoder(r)
 	var kvs map[string]string
+	// 如果不保存这个，就会出现刚开始日志提交了两个重复的 append，假如 server 挂了重新恢复的时候，维护的每个 cli最后一个的值没了，
+	// 这个时候重新执行就会执行成功。
+	var lastResult map[int]int
 	if d.Decode(&kvs) != nil {
-		DPrintf("readSnapShot decode error....")
-	} else {
-		kv.mu.Lock()
-		kv.kvs = kvs
-		kv.mu.Unlock()
-		DPrintf("finish readSnapShot....kv.me:%v , kv.kvs:%v", kv.me,
-			kvs)
+		DPrintf("readSnapShot decode kvs error....")
+		return
 	}
+	if d.Decode(&lastResult) != nil {
+		DPrintf("readSnapShot decode lastResult error....")
+		return
+	}
+
+	kv.mu.Lock()
+	//kv.rf.LastIncludedTerm = LastIncludedTerm
+	//kv.rf.LastIncludedIndex = LastIncludedIndex
+	kv.kvs = kvs
+	kv.lastResult = lastResult
+	kv.mu.Unlock()
+	DPrintf("%v finish readSnapShot...., kv.kvs:%v", kv.me,
+		kvs)
+
 	//kv.mu.Lock()
 	//defer kv.mu.Lock()
 }
@@ -234,6 +260,8 @@ func (kv *KVServer) applyOP(msg raft.ApplyMsg) bool {
 			DPrintf("%v apply, put: %v", kv.me, kv.kvs[op.Key])
 		}
 		kv.lastResult[op.CliId] = op.Seq
+		// 更新 ApplyId
+		kv.rf.UpdateApplyId(msg.CommandIndex)
 	}
 	notifyMsg.err = OK
 	currentTerm, _ := kv.rf.GetState()
@@ -287,16 +315,23 @@ func StartKVServer(servers []*labrpc.ClientEnd, me int, persister *raft.Persiste
 		for !kv.killed() {
 			msg := <-kv.applyCh
 			if msg.CommandValid {
+				// kv应用
+				kv.applyOP(msg)
+				//if !ok {
+				//	continue
+				//}
 				// 每次快照实际内容的更新其实在应用appId上，所有在这更新，而不是每次log增加的时候
+				// 存在一种情况，假如 cut 在kv应用前会出现 bug，applyId 被更新了，然后执行 cut，但是更新的那个 kv 还没有进入快照，
+				// 同时也不存在 log 里，假如这时候 raft 挂了，那个kv就找不回来了，要注意顺序，最好是按现实生活中逻辑发生的顺序编程
+
+				// 还有一种情况，由于 applyId 是一下先更新的，applyId 更新到 265，消息一条条发送过来，假如到第 260的时候恰好触发了
+				// cut，但是快照只存了 260，就会出现发出去的快照只包含 260，但是让接收者的 lastIncluded 更新到 265，进而 nextIndex 到了 265
+				// 下次 leader 再发的时候中间 260到 265的所有东西都没了
 				if maxraftstate != -1 && persister.RaftStateSize() > 0 &&
 					float64(persister.RaftStateSize())/float64(maxraftstate) >= 0.95 {
-					DPrintf("maxraftstate:%v,persister.RaftStateSize():%v", float64(maxraftstate), float64(persister.RaftStateSize()))
-					kv.rf.CupLogExceedMaxSizeAndSaveSnapShot(kv.kvs)
-				}
-				// kv应用
-				ok := kv.applyOP(msg)
-				if !ok {
-					continue
+					DPrintf("%v maxraftstate:%v,persister.RaftStateSize():%v", kv.me, float64(maxraftstate),
+						float64(persister.RaftStateSize()))
+					kv.rf.CupLogExceedMaxSizeAndSaveSnapShot(kv.kvs, kv.lastResult, msg.CommandIndex)
 				}
 			} else {
 				DPrintf("receve snapShot")
@@ -316,6 +351,7 @@ func StartKVServer(servers []*labrpc.ClientEnd, me int, persister *raft.Persiste
 	//		}
 	//	}()
 	//}
+	DPrintf("server 奔溃恢复")
 	kv.readSnapShot(persister.ReadSnapshot())
 	return kv
 }
