@@ -273,8 +273,8 @@ func (kv *KVServer) applyOP(msg raft.ApplyMsg) bool {
 			DPrintf("%v apply, put: %v", kv.me, kv.kvs[op.Key])
 		}
 		kv.lastResult[op.CliId] = op.Seq
-		// 更新 lastApplied
-		kv.rf.UpdateApplyId(msg.CommandIndex)
+		//// 更新 lastApplied
+		//kv.rf.UpdateApplyId(msg.CommandIndex)
 	}
 	notifyMsg.err = OK
 	currentTerm, _ := kv.rf.GetState()
@@ -344,7 +344,7 @@ func StartKVServer(servers []*labrpc.ClientEnd, me int, persister *raft.Persiste
 					float64(persister.RaftStateSize())/float64(maxraftstate) >= 0.99 {
 					DPrintf("%v maxraftstate:%v,persister.RaftStateSize():%v", kv.me, float64(maxraftstate),
 						float64(persister.RaftStateSize()))
-					kv.rf.CupLogExceedMaxSizeAndSaveSnapShot(kv.kvs, kv.lastResult, msg.CommandIndex)
+					kv.rf.CutLogExceedMaxSizeAndSaveSnapShot(kv.kvs, kv.lastResult, msg.CommandIndex)
 				}
 			} else {
 				DPrintf("receve snapShot")
