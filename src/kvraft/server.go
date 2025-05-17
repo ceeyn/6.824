@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-const Debug = 1
+const Debug = 0
 const RaftTimeout = 500 * time.Millisecond
 
 func DPrintf(format string, a ...interface{}) (n int, err error) {
@@ -226,6 +226,7 @@ func (kv *KVServer) readSnapShot(data []byte) {
 	}
 
 	kv.mu.Lock()
+	log.Printf("acuqire s.readSnapShot success....")
 	//kv.rf.LastIncludedTerm = LastIncludedTerm
 	//kv.rf.LastIncludedIndex = LastIncludedIndex
 	kv.kvs = kvs
@@ -233,7 +234,7 @@ func (kv *KVServer) readSnapShot(data []byte) {
 	kv.mu.Unlock()
 	DPrintf("%v finish readSnapShot...., kv.kvs:%v", kv.me,
 		kvs)
-
+	log.Printf("realse s.readSnapShot success....")
 	//kv.mu.Lock()
 	//defer kv.mu.Lock()
 }
@@ -248,6 +249,7 @@ func (kv *KVServer) applyOP(msg raft.ApplyMsg) bool {
 	commandType := op.CommandType
 	var notifyMsg ApplyNotifyMsg
 	kv.mu.Lock()
+	log.Printf("acuqire s.applyOP success....")
 	DPrintf("%v begin, apply: %v", kv.me, op)
 	if maxSeq, ok := kv.lastResult[op.CliId]; ok && op.Seq <= maxSeq {
 		if commandType == GET {
@@ -273,8 +275,8 @@ func (kv *KVServer) applyOP(msg raft.ApplyMsg) bool {
 			DPrintf("%v apply, put: %v", kv.me, kv.kvs[op.Key])
 		}
 		kv.lastResult[op.CliId] = op.Seq
-		// 更新 lastApplied
-		kv.rf.UpdateApplyId(msg.CommandIndex)
+		//// 更新 lastApplied
+		//kv.rf.UpdateApplyId(msg.CommandIndex)
 	}
 	notifyMsg.err = OK
 	currentTerm, _ := kv.rf.GetState()
@@ -283,12 +285,15 @@ func (kv *KVServer) applyOP(msg raft.ApplyMsg) bool {
 	if !ex {
 		DPrintf("%v chan don't exist", msg)
 		kv.mu.Unlock()
+		log.Printf("realse s.applyOP success....")
 		return false
 	} else {
 		kv.mu.Unlock()
+		log.Printf("realse s.applyOP success....")
 		// 通知等待的RPC处理程序
 		DPrintf("%v sendindexChan, msg: %v", kv.me, notifyMsg)
 		ch <- notifyMsg
+		log.Printf("server send notifymsg success....")
 		return true
 	}
 }
@@ -327,6 +332,7 @@ func StartKVServer(servers []*labrpc.ClientEnd, me int, persister *raft.Persiste
 	go func() {
 		for !kv.killed() {
 			msg := <-kv.applyCh
+			log.Printf("server recv msg....")
 			if msg.CommandValid {
 				// kv应用
 				kv.applyOP(msg)
@@ -341,14 +347,15 @@ func StartKVServer(servers []*labrpc.ClientEnd, me int, persister *raft.Persiste
 				// cut，但是快照只存了 260，就会出现发出去的快照只包含 260，但是让接收者的 lastIncluded 更新到 265，进而 nextIndex 到了 265
 				// 下次 leader 再发的时候中间 260到 265的所有东西都没了
 				if maxraftstate != -1 && persister.RaftStateSize() > 0 &&
-					float64(persister.RaftStateSize())/float64(maxraftstate) >= 0.99 {
+					float64(persister.RaftStateSize())/float64(maxraftstate) >= 0.9 {
 					DPrintf("%v maxraftstate:%v,persister.RaftStateSize():%v", kv.me, float64(maxraftstate),
 						float64(persister.RaftStateSize()))
-					kv.rf.CupLogExceedMaxSizeAndSaveSnapShot(kv.kvs, kv.lastResult, msg.CommandIndex)
+					kv.rf.CutLogExceedMaxSizeAndSaveSnapShot(kv.kvs, kv.lastResult, msg.CommandIndex)
 				}
 			} else {
-				DPrintf("receve snapShot")
+				log.Printf("server receve snapShot success")
 				// 快照
+				//kv.readSnapShot(msg.Command.([]byte))
 				kv.readSnapShot(msg.Command.([]byte))
 			}
 		}

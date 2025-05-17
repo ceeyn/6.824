@@ -1,6 +1,9 @@
 package kvraft
 
-import "../porcupine"
+import (
+	"../porcupine"
+	"runtime"
+)
 import "../models"
 import "testing"
 import "strconv"
@@ -222,7 +225,7 @@ func GenericTest(t *testing.T, part string, nclients int, unreliable bool, crash
 				}
 			}
 		})
-
+		DPrintf("test Partition1....")
 		if partitions {
 			// Allow the clients to perform some operations without interruption
 			time.Sleep(1 * time.Second)
@@ -232,7 +235,7 @@ func GenericTest(t *testing.T, part string, nclients int, unreliable bool, crash
 
 		atomic.StoreInt32(&done_clients, 1)     // tell clients to quit
 		atomic.StoreInt32(&done_partitioner, 1) // tell partitioner to quit
-
+		DPrintf("test Partition2....")
 		if partitions {
 			// log.Printf("wait for partitioner\n")
 			<-ch_partitioner
@@ -244,7 +247,7 @@ func GenericTest(t *testing.T, part string, nclients int, unreliable bool, crash
 			// wait for a while so that we have a new term
 			time.Sleep(electionTimeout)
 		}
-
+		DPrintf("test crash....")
 		if crash {
 			// log.Printf("shutdown servers\n")
 			for i := 0; i < nservers; i++ {
@@ -273,7 +276,7 @@ func GenericTest(t *testing.T, part string, nclients int, unreliable bool, crash
 			v := Get(cfg, ck, key)
 			checkClntAppends(t, i, v, j)
 		}
-
+		DPrintf("final test....")
 		if maxraftstate > 0 {
 			// Check maximum after the servers have processed all client
 			// requests and had time to checkpoint.
@@ -290,6 +293,12 @@ func GenericTest(t *testing.T, part string, nclients int, unreliable bool, crash
 			}
 		}
 	}
+	go func() {
+		time.Sleep(120 * time.Second)               // 等待 10 秒
+		buf := make([]byte, 1<<20)                  // 分配 1MB 缓冲区
+		runtime.Stack(buf, true)                    // 获取所有 goroutine 的堆栈信息（第二个参数 true 表示“打印所有 goroutine”）
+		fmt.Printf("=== STACK DUMP ===\n%s\n", buf) // 打印
+	}()
 
 	cfg.end()
 }
@@ -626,7 +635,12 @@ func TestSnapshotRPC3B(t *testing.T) {
 	ck := cfg.makeClient(cfg.All())
 
 	cfg.begin("Test: InstallSnapshot RPC (3B)")
-
+	//go func() {
+	//	time.Sleep(10 * time.Second)                // 等待 10 秒
+	//	buf := make([]byte, 1<<20)                  // 分配 1MB 缓冲区
+	//	runtime.Stack(buf, true)                    // 获取所有 goroutine 的堆栈信息（第二个参数 true 表示“打印所有 goroutine”）
+	//	fmt.Printf("=== STACK DUMP ===\n%s\n", buf) // 打印
+	//}()
 	Put(cfg, ck, "a", "A")
 	check(cfg, t, ck, "a", "A")
 	DPrintf("0 check...........")
@@ -709,30 +723,36 @@ func TestSnapshotSize3B(t *testing.T) {
 
 func TestSnapshotRecover3B(t *testing.T) {
 	// Test: restarts, snapshots, one client (3B) ...
+	DPrintf("test 3b1")
 	GenericTest(t, "3B", 1, false, true, false, 1000)
 }
 
 func TestSnapshotRecoverManyClients3B(t *testing.T) {
 	// Test: restarts, snapshots, many clients (3B) ...
+	DPrintf("test 3b2")
 	GenericTest(t, "3B", 20, false, true, false, 1000)
 }
 
 func TestSnapshotUnreliable3B(t *testing.T) {
 	// Test: unreliable net, snapshots, many clients (3B) ...
+	DPrintf("test 3b3")
 	GenericTest(t, "3B", 5, true, false, false, 1000)
 }
 
 func TestSnapshotUnreliableRecover3B(t *testing.T) {
 	// Test: unreliable net, restarts, snapshots, many clients (3B) ...
+	DPrintf("test 3b4")
 	GenericTest(t, "3B", 5, true, true, false, 1000)
 }
 
 func TestSnapshotUnreliableRecoverConcurrentPartition3B(t *testing.T) {
 	// Test: unreliable net, restarts, partitions, snapshots, many clients (3B) ...
+	DPrintf("test 3b5")
 	GenericTest(t, "3B", 5, true, true, true, 1000)
 }
 
 func TestSnapshotUnreliableRecoverConcurrentPartitionLinearizable3B(t *testing.T) {
 	// Test: unreliable net, restarts, partitions, snapshots, linearizability checks (3B) ...
+	DPrintf("test 3b6")
 	GenericTestLinearizability(t, "3B", 15, 7, true, true, true, 1000)
 }
