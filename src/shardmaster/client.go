@@ -4,7 +4,10 @@ package shardmaster
 // Shardmaster clerk.
 //
 
-import "../labrpc"
+import (
+	"../labrpc"
+	"sync"
+)
 import "time"
 import "crypto/rand"
 import "math/big"
@@ -12,6 +15,9 @@ import "math/big"
 type Clerk struct {
 	servers []*labrpc.ClientEnd
 	// Your data here.
+	cliId int
+	seqId int
+	mu    sync.Mutex
 }
 
 func nrand() int64 {
@@ -25,17 +31,24 @@ func MakeClerk(servers []*labrpc.ClientEnd) *Clerk {
 	ck := new(Clerk)
 	ck.servers = servers
 	// Your code here.
+	ck.cliId = int(nrand())
 	return ck
 }
 
 func (ck *Clerk) Query(num int) Config {
 	args := &QueryArgs{}
+	ck.mu.Lock()
+	args.SeqId = ck.seqId
+	ck.seqId++
+	args.CliId = ck.cliId
+	ck.mu.Unlock()
 	// Your code here.
 	args.Num = num
 	for {
 		// try each known server.
 		for _, srv := range ck.servers {
 			var reply QueryReply
+			DPrintf("cli begin query:%v", args)
 			ok := srv.Call("ShardMaster.Query", args, &reply)
 			if ok && reply.WrongLeader == false {
 				return reply.Config
@@ -49,11 +62,16 @@ func (ck *Clerk) Join(servers map[int][]string) {
 	args := &JoinArgs{}
 	// Your code here.
 	args.Servers = servers
-
+	ck.mu.Lock()
+	args.SeqId = ck.seqId
+	ck.seqId++
+	args.CliId = ck.cliId
+	ck.mu.Unlock()
 	for {
 		// try each known server.
 		for _, srv := range ck.servers {
 			var reply JoinReply
+			DPrintf("cli begin join:%v", args)
 			ok := srv.Call("ShardMaster.Join", args, &reply)
 			if ok && reply.WrongLeader == false {
 				return
@@ -67,11 +85,16 @@ func (ck *Clerk) Leave(gids []int) {
 	args := &LeaveArgs{}
 	// Your code here.
 	args.GIDs = gids
-
+	ck.mu.Lock()
+	args.SeqId = ck.seqId
+	ck.seqId++
+	args.CliId = ck.cliId
+	ck.mu.Unlock()
 	for {
 		// try each known server.
 		for _, srv := range ck.servers {
 			var reply LeaveReply
+			DPrintf("cli begin leave:%v", args)
 			ok := srv.Call("ShardMaster.Leave", args, &reply)
 			if ok && reply.WrongLeader == false {
 				return
@@ -86,11 +109,16 @@ func (ck *Clerk) Move(shard int, gid int) {
 	// Your code here.
 	args.Shard = shard
 	args.GID = gid
-
+	ck.mu.Lock()
+	args.SeqId = ck.seqId
+	ck.seqId++
+	args.CliId = ck.cliId
+	ck.mu.Unlock()
 	for {
 		// try each known server.
 		for _, srv := range ck.servers {
 			var reply MoveReply
+			DPrintf("cli begin move:%v", args)
 			ok := srv.Call("ShardMaster.Move", args, &reply)
 			if ok && reply.WrongLeader == false {
 				return
