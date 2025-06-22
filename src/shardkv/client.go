@@ -1,24 +1,26 @@
 package shardkv
 
 //
-// client code to talk to a sharded key/value service.
+// client code to talk to a sharded Key/value service.
 //
 // the client first talks to the shardmaster to find out
 // the assignment of shards (keys) to groups, and then
-// talks to the group that holds the key's shard.
+// talks to the group that holds the Key's shard.
 //
 
-import "../labrpc"
+import (
+	"../labrpc"
+	"log"
+	"sync"
+)
 import "crypto/rand"
 import "math/big"
 import "../shardmaster"
 import "time"
 
-//
-// which shard is a key in?
+// which shard is a Key in?
 // please use this function,
 // and please do not change it.
-//
 func key2shard(key string) int {
 	shard := 0
 	if len(key) > 0 {
@@ -40,9 +42,11 @@ type Clerk struct {
 	config   shardmaster.Config
 	make_end func(string) *labrpc.ClientEnd
 	// You will have to modify this struct.
+	cliId  int
+	lastId int
+	mu     sync.Mutex
 }
 
-//
 // the tester calls MakeClerk.
 //
 // masters[] is needed to call shardmaster.MakeClerk().
@@ -50,25 +54,28 @@ type Clerk struct {
 // make_end(servername) turns a server name from a
 // Config.Groups[gid][i] into a labrpc.ClientEnd on which you can
 // send RPCs.
-//
 func MakeClerk(masters []*labrpc.ClientEnd, make_end func(string) *labrpc.ClientEnd) *Clerk {
 	ck := new(Clerk)
 	ck.sm = shardmaster.MakeClerk(masters)
 	ck.make_end = make_end
 	// You'll have to add code here.
+	ck.cliId = int(nrand())
+
 	return ck
 }
 
-//
-// fetch the current value for a key.
-// returns "" if the key does not exist.
+// fetch the current value for a Key.
+// returns "" if the Key does not exist.
 // keeps trying forever in the face of all other errors.
 // You will have to modify this function.
-//
 func (ck *Clerk) Get(key string) string {
 	args := GetArgs{}
 	args.Key = key
-
+	ck.mu.Lock()
+	args.CliId = ck.cliId
+	args.SeqId = ck.lastId
+	ck.lastId++
+	ck.mu.Unlock()
 	for {
 		shard := key2shard(key)
 		gid := ck.config.Shards[shard]
@@ -77,7 +84,10 @@ func (ck *Clerk) Get(key string) string {
 			for si := 0; si < len(servers); si++ {
 				srv := ck.make_end(servers[si])
 				var reply GetReply
+				DPrintf("%v cli begin get, %v", ck.cliId, gid)
 				ok := srv.Call("ShardKV.Get", &args, &reply)
+				DPrintf("%v cli finish get, %v", ck.cliId, reply)
+				log.Printf("shard %v gid %v %v finish get, %v", shard, gid, servers[si], reply)
 				if ok && (reply.Err == OK || reply.Err == ErrNoKey) {
 					return reply.Value
 				}
@@ -85,6 +95,9 @@ func (ck *Clerk) Get(key string) string {
 					break
 				}
 				// ... not ok, or ErrWrongLeader
+				if !ok || reply.Err == ErrWrongLeader {
+					continue
+				}
 			}
 		}
 		time.Sleep(100 * time.Millisecond)
@@ -95,17 +108,18 @@ func (ck *Clerk) Get(key string) string {
 	return ""
 }
 
-//
 // shared by Put and Append.
 // You will have to modify this function.
-//
 func (ck *Clerk) PutAppend(key string, value string, op string) {
 	args := PutAppendArgs{}
 	args.Key = key
 	args.Value = value
 	args.Op = op
-
-
+	ck.mu.Lock()
+	args.CliId = ck.cliId
+	args.SeqId = ck.lastId
+	ck.lastId++
+	ck.mu.Unlock()
 	for {
 		shard := key2shard(key)
 		gid := ck.config.Shards[shard]
@@ -113,7 +127,9 @@ func (ck *Clerk) PutAppend(key string, value string, op string) {
 			for si := 0; si < len(servers); si++ {
 				srv := ck.make_end(servers[si])
 				var reply PutAppendReply
+				DPrintf("%v cli begin PutAppend, %v", ck.cliId, gid)
 				ok := srv.Call("ShardKV.PutAppend", &args, &reply)
+				DPrintf("%v cli finish PutAppend, %v", ck.cliId, reply)
 				if ok && reply.Err == OK {
 					return
 				}
@@ -121,6 +137,9 @@ func (ck *Clerk) PutAppend(key string, value string, op string) {
 					break
 				}
 				// ... not ok, or ErrWrongLeader
+				if !ok || reply.Err == ErrWrongLeader {
+					continue
+				}
 			}
 		}
 		time.Sleep(100 * time.Millisecond)
